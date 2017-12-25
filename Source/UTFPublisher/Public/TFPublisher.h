@@ -7,6 +7,8 @@
 #include "GameFramework/Actor.h"
 #include "ROSBridgeHandler.h"
 #include "ROSBridgePublisher.h"
+#include "Math/Vector4.h"
+#include "FTFTree.h"
 #include "TFPublisher.generated.h"
 
 UCLASS()
@@ -60,4 +62,7 @@ private:
 
 	// Publisher timer handle (in case of custom publish rate)
 	FTimerHandle TFPubTimer;
+
+	// TFTree
+	FTFTree TFTree;
 };

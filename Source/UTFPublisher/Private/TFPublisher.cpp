@@ -1,9 +1,11 @@
 // Copyright 2017, Institute for Artificial Intelligence - University of Bremen
+// Author: Andrei Haidu (http://haidu.eu)
 
 #include "TFPublisher.h"
 #include "TagStatics.h"
 #include "CoordConvStatics.h"
-
+#include "FTFTree.h"
+#include "tf2_msgs/TFMessage.h"
 
 // Sets default values
 ATFPublisher::ATFPublisher()
@@ -20,6 +22,8 @@ ATFPublisher::ATFPublisher()
 	// ROSBridge server default values
 	ServerIP = "127.0.0.1";
 	ServerPORT = 9090;
+
+	FTFTree A;
 }
 
 // Called when the game starts or when spawned
@@ -45,7 +49,6 @@ void ATFPublisher::BeginPlay()
 		SetActorTickEnabled(false);
 
 		// Setup timer
-		UE_LOG(LogTemp, Warning, TEXT("SET TIMER"));
 		GetWorldTimerManager().SetTimer(TFPubTimer, this, &ATFPublisher::PublishTF, PublishRate, true);
 	}
 }
@@ -75,5 +78,38 @@ void ATFPublisher::BuildTFTree()
 void ATFPublisher::PublishTF()
 {
 	//UE_LOG(LogTemp, Warning, TEXT("Pub"));
+
+	TSharedPtr<FROSBridgeMsgGeometrymsgsTransformStamped> StampedTransformMsg =
+		MakeShareable(new FROSBridgeMsgGeometrymsgsTransformStamped());
+
+
+
+
+
+	TSharedPtr<FROSBridgeMsgGeometrymsgsTransform> TrsanformMsg =
+		MakeShareable(new FROSBridgeMsgGeometrymsgsTransform());
+
+	TSharedPtr<FROSBridgeMsgGeometrymsgsVector3> TranslationMsg =
+		MakeShareable(new FROSBridgeMsgGeometrymsgsVector3());
+	FROSBridgeMsgGeometrymsgsVector3 TM(1,2,3);
+
+	TSharedPtr<FROSBridgeMsgGeometrymsgsQuaternion> RotationMsg =
+		MakeShareable(new FROSBridgeMsgGeometrymsgsQuaternion());
+
+
+	
+	TranslationMsg->SetVector(FVector(0));
+	RotationMsg->SetQuat(FQuat(FQuat::Identity));
+
+	TrsanformMsg->SetTranslation(TM);
+	TrsanformMsg->SetTranslation(FROSBridgeMsgGeometrymsgsVector3(0.1f, 0.2f, 0.3f));
+	TrsanformMsg->SetTranslation(*TranslationMsg.Get()); // TODO  PTSharedPtr<FROSBridgeMsg> InMsg
+	TrsanformMsg->SetRotation(*RotationMsg.Get()); // TODO  PTSharedPtr<FROSBridgeMsg> InMsg
+
+	StampedTransformMsg->SetTransform(*TrsanformMsg.Get());
+	//StampedTransformMsg->SetHeader(FROSBridgeMsgStdmsgsHeader();
+
+	ROSBridgeHandler->PublishMsg("/tf", StampedTransformMsg);
+
 	ROSBridgeHandler->Render();
 }
