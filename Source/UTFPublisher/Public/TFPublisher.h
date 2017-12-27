@@ -39,13 +39,19 @@ public:
 	UPROPERTY(EditAnywhere, Category = TF, meta = (ClampMin = 0, ClampMax = 65535))
 	int32 ServerPORT;
 
-	// Check if the update rate should be custom or on every tick
+	// Choose between dynamic (various publish rates for the frames) 
+	// or static publish rates (all frames updated at the same time)
 	UPROPERTY(EditAnywhere, Category = TF)
-	bool bUseCustomUpdateRate;
+	bool bUseStaticPublishRate;
+
+	// Delta time (s) between publishing (0 = on Tick)
+	UPROPERTY(EditAnywhere, Category = TF, meta = (editcondition = "bUseStaticPublishRate", ClampMin = "0.0"))
+	float StaticPublishRate;
+	
 
 	// Delta time between timer publishing (s)
-	UPROPERTY(EditAnywhere, Category = TF, meta = (editcondition = "bUseCustomUpdateRate", ClampMin = "0.0"))
-	float PublishRate;
+	UPROPERTY(EditAnywhere, Category = TF)
+	uint32 NrOfTFMsgTEST;
 	
 private:
 	// Build the tf tree
@@ -58,11 +64,14 @@ private:
 	TSharedPtr<FROSBridgeHandler> ROSBridgeHandler;
 
 	// ROSPublisher for publishing TF
-	TSharedPtr<FROSBridgePublisher> ROSBridgePublisher;
+	TSharedPtr<FROSBridgePublisher> TFPublisher;
 
 	// Publisher timer handle (in case of custom publish rate)
 	FTimerHandle TFPubTimer;
 
 	// TFTree
 	FTFTree TFTree;
+
+	// TF header sequence
+	uint32 Seq;
 };

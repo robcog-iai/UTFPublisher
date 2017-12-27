@@ -25,8 +25,8 @@ private:
 	// Array of the children subtrees
 	TArray<FTFTree> Children;
 
-	// Name of the frame id
-	FString FrameID;
+	// Name of the (parent) frame id
+	FString FrameId;
 
 	// Base object type to get the transform
 	AActor* ActorBaseObject;
@@ -49,8 +49,8 @@ public:
 	FTFTree() : Parent(nullptr) { }
 	
 	// Constructor with initialization as actor and frame id
-	FTFTree(AActor* InActor, FString InFrameID)
-		: ActorBaseObject(InActor), Parent(nullptr), FrameID(InFrameID)
+	FTFTree(AActor* InActor, FString InFrameId)
+		: ActorBaseObject(InActor), Parent(nullptr), FrameId(InFrameId)
 	{
 		// Bind the get transforms functions
 		RelativeTransformFunctionPtr = &FTFTree::GetRelativeTransform_AsActor;
@@ -58,8 +58,8 @@ public:
 	}
 	
 	// Constructor with initialization as scene component and frame id
-	FTFTree(USceneComponent* InSceneComponent, FString InFrameID)
-		: SceneComponentBaseObject(InSceneComponent), Parent(nullptr), FrameID(InFrameID)
+	FTFTree(USceneComponent* InSceneComponent, FString InFrameId)
+		: SceneComponentBaseObject(InSceneComponent), Parent(nullptr), FrameId(InFrameId)
 	{
 		// Bind the get transforms functions
 		RelativeTransformFunctionPtr = &FTFTree::GetRelativeTransform_AsSceneComponent;
@@ -92,15 +92,15 @@ public:
 	}
 	
 	// Get the frame id name
-	FString GetFrameID() const
+	FString GetFrameId() const
 	{
-		return FrameID;
+		return FrameId;
 	}
 	
 	// Set frame id
-	void SetSetFrameID(FString InFrameID)
+	void SetSetFrameId(FString InFrameId)
 	{
-		FrameID = InFrameID;
+		FrameId = InFrameId;
 	}
 	
 	// Add child to array
@@ -111,10 +111,10 @@ public:
 	}
 	
 	// Add child to the parent frame
-	bool AddChildAtFrameID(FTFTree InChild, const FString& InParentFrameID)
+	bool AddChildAtFrameId(FTFTree InChild, const FString& InParentFrameId)
 	{
 		// Check current parent frame id
-		if (FrameID.Equals(InParentFrameID))
+		if (FrameId.Equals(InParentFrameId))
 		{
 			AddChild(InChild);
 			return true;
@@ -124,7 +124,7 @@ public:
 			// Check every child frame id
 			for (auto& Child : Children)
 			{
-				Child.AddChildAtFrameID(InChild, InParentFrameID);
+				Child.AddChildAtFrameId(InChild, InParentFrameId);
 			}
 		}
 		return false;
@@ -210,10 +210,10 @@ private:
 //	FTFTree();
 //
 //	// Constructor with initialization as actor and frame id
-//	FTFTree(AActor* InActor, FString InFrameID);
+//	FTFTree(AActor* InActor, FString InFrameId);
 //
 //	// Constructor with initialization as scene component and frame id
-//	FTFTree(USceneComponent* InSceneComponent, FString InFrameID);
+//	FTFTree(USceneComponent* InSceneComponent, FString InFrameId);
 //
 //	// Destructor
 //	~FTFTree();
@@ -228,16 +228,16 @@ private:
 //	FTFTree* GetParent() const;
 //
 //	// Set frame id
-//	void SetSetFrameID(FString InFrameID);
+//	void SetSetFrameId(FString InFrameId);
 //
 //	// Get the frame id
-//	FString GetFrameID() const;
+//	FString GetFrameId() const;
 //
 //	// Add child to array
 //	void AddChild(FTFTree InChild);
 //
 //	// Add child to the parent frame
-//	bool AddChildAtFrameID(FTFTree InChild, const FString& InParentFrameID);
+//	bool AddChildAtFrameId(FTFTree InChild, const FString& InParentFrameId);
 //
 //	// Get the array of children
 //	TArray<FTFTree> GetChildren() const;
@@ -280,7 +280,7 @@ private:
 //	TArray<FTFTree> Children;
 //
 //	// Name of the frame id
-//	FString FrameID;
+//	FString FrameId;
 //
 //	// Base object type to get the transform
 //	AActor* ActorBaseObject;
@@ -294,8 +294,8 @@ private:
 //FTFTree::FTFTree() : Parent(nullptr) { }
 //
 //// Constructor with initialization as actor and frame id
-//FTFTree::FTFTree(AActor* InActor, FString InFrameID)
-//	: ActorBaseObject(InActor), Parent(nullptr), FrameID(InFrameID)
+//FTFTree::FTFTree(AActor* InActor, FString InFrameId)
+//	: ActorBaseObject(InActor), Parent(nullptr), FrameId(InFrameId)
 //{
 //	// Bind the get transforms functions
 //	RelativeTransformFunctionPtr = &FTFTree::GetRelativeTransform_AsActor;
@@ -303,8 +303,8 @@ private:
 //}
 //
 //// Constructor with initialization as scene component and frame id
-//FTFTree::FTFTree(USceneComponent* InSceneComponent, FString InFrameID)
-//	: SceneComponentBaseObject(InSceneComponent), Parent(nullptr), FrameID(InFrameID)
+//FTFTree::FTFTree(USceneComponent* InSceneComponent, FString InFrameId)
+//	: SceneComponentBaseObject(InSceneComponent), Parent(nullptr), FrameId(InFrameId)
 //{
 //	// Bind the get transforms functions
 //	RelativeTransformFunctionPtr = &FTFTree::GetRelativeTransform_AsSceneComponent;
@@ -337,15 +337,15 @@ private:
 //}
 //
 //// Get the frame id name
-//FString FTFTree::GetFrameID() const
+//FString FTFTree::GetFrameId() const
 //{
-//	return FrameID;
+//	return FrameId;
 //}
 //
 //// Set frame id
-//void FTFTree::SetSetFrameID(FString InFrameID)
+//void FTFTree::SetSetFrameId(FString InFrameId)
 //{
-//	FrameID = InFrameID;
+//	FrameId = InFrameId;
 //}
 //
 //// Add child to array
@@ -356,10 +356,10 @@ private:
 //}
 //
 //// Add child to the parent frame
-//bool FTFTree::AddChildAtFrameID(FTFTree InChild, const FString& InParentFrameID)
+//bool FTFTree::AddChildAtFrameId(FTFTree InChild, const FString& InParentFrameId)
 //{
 //	// Check current parent frame id
-//	if (FrameID.Equals(InParentFrameID))
+//	if (FrameId.Equals(InParentFrameId))
 //	{
 //		AddChild(InChild);
 //		return true;
@@ -369,7 +369,7 @@ private:
 //		// Check every child frame id
 //		for (auto& Child : Children)
 //		{
-//			Child.AddChildAtFrameID(InChild, InParentFrameID);
+//			Child.AddChildAtFrameId(InChild, InParentFrameId);
 //		}
 //	}
 //	return false;

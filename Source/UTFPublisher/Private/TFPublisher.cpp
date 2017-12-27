@@ -14,16 +14,14 @@ ATFPublisher::ATFPublisher()
 	PrimaryActorTick.bCanEverTick = true;
 
 	// Update on tick by default
-	bUseCustomUpdateRate = false;
+	bUseStaticPublishRate = false;
 
-	// Default timer delta time (s)
-	PublishRate = 0.05f;
+	// Default timer delta time (s) (0 = on Tick)
+	StaticPublishRate = 0.0f;
 
 	// ROSBridge server default values
 	ServerIP = "127.0.0.1";
 	ServerPORT = 9090;
-
-	FTFTree A;
 }
 
 // Called when the game starts or when spawned
@@ -36,20 +34,29 @@ void ATFPublisher::BeginPlay()
 		new FROSBridgeHandler(ServerIP, ServerPORT));
 	
 	// Create the publisher
-	ROSBridgePublisher = MakeShareable<FROSBridgePublisher>(
-		new FROSBridgePublisher("geometry_msgs/TransformStamped", "/tf"));
+	TFPublisher = MakeShareable<FROSBridgePublisher>(
+		new FROSBridgePublisher("tf2_msgs/TFMessage", "/tf"));
+
+	// Add publisher
+	ROSBridgeHandler->AddPublisher(TFPublisher);
 
 	// Connect to ROS
 	ROSBridgeHandler->Connect();
 
 	// Bind publish function to timer
-	if (bUseCustomUpdateRate)
+	if (bUseStaticPublishRate)
 	{
-		// Disable tick
-		SetActorTickEnabled(false);
-
-		// Setup timer
-		GetWorldTimerManager().SetTimer(TFPubTimer, this, &ATFPublisher::PublishTF, PublishRate, true);
+		if (StaticPublishRate > 0.f)
+		{
+			// Disable tick
+			SetActorTickEnabled(false);
+			// Setup timer
+			GetWorldTimerManager().SetTimer(TFPubTimer, this, &ATFPublisher::PublishTF, StaticPublishRate, true);
+		}
+	}
+	else
+	{
+		// Take into account the PublishRate Tag key value pair (if missing, publish on tick)
 	}
 }
 
@@ -71,45 +78,90 @@ void ATFPublisher::Tick(float DeltaTime)
 // Build the tf tree
 void ATFPublisher::BuildTFTree()
 {
-	FTagStatics::GetActorsToKeyValuePairs(GetWorld(), "TF");
+	TMap<AActor*, TMap<FString, FString>> TFActorMap = FTagStatics::GetActorsToKeyValuePairs(GetWorld(), "TF");
+	TMap<UActorComponent*, TMap<FString, FString>> TFCompMap = FTagStatics::GetComponentsToKeyValuePairs(GetWorld(), "TF");
 }
 
 // Publish tf tree
 void ATFPublisher::PublishTF()
 {
-	//UE_LOG(LogTemp, Warning, TEXT("Pub"));
+	FROSTime TimeNow = FROSTime::Now();
 
-	TSharedPtr<FROSBridgeMsgGeometrymsgsTransformStamped> StampedTransformMsg =
-		MakeShareable(new FROSBridgeMsgGeometrymsgsTransformStamped());
+	//// TF
+	//TSharedPtr<FROSBridgeMsgTF2msgsTFMessage> TFMsgPtr =
+	//	MakeShareable(new FROSBridgeMsgTF2msgsTFMessage());
+
+	//for (uint32 i = 0; i < NrOfTFMsgTEST; i++)
+	//{
+	//	FROSBridgeMsgGeometrymsgsTransformStamped StampedTransformMsg;
+
+	//	FROSBridgeMsgStdmsgsHeader Header;
+	//	Header.SetSeq(Seq);
+	//	Header.SetFrameId(TEXT("world"));
+	//	Header.SetStamp(TimeNow);
+
+	//	FROSBridgeMsgGeometrymsgsTransform TransfMsg(
+	//		FROSBridgeMsgGeometrymsgsVector3(
+	//			FMath::RandRange(-0.1f, 0.1f) + (0.2*i),
+	//			FMath::RandRange(-0.2f, 0.2f) + (0.2*i),
+	//			FMath::RandRange(-0.1f, 0.1f) + (0.2*i)),
+	//		FROSBridgeMsgGeometrymsgsQuaternion(FRotator(
+	//			FMath::RandRange(-10.f, 10.f) + (0.2*i),
+	//			FMath::RandRange(-10.f, 10.f) + (0.2*i),
+	//			FMath::RandRange(-10.f, 10.f) + (0.2*i)).Quaternion()));
+
+	//	StampedTransformMsg.SetHeader(Header);
+	//	StampedTransformMsg.SetChildFrameId(FString("child_").Append(FString::FromInt(i)));
+	//	StampedTransformMsg.SetTransform(TransfMsg);
+
+	//	TFMsgPtr->AddTransform(StampedTransformMsg);
+	//}
+
+	//// PUB
+	//ROSBridgeHandler->PublishMsg("/tf", TFMsgPtr);
 
 
+	/////////////////////////////////////////////////////////////////
+	// NS version
+	TSharedPtr<tf2_msgs::TFMessage> NsTFMsgPtr =
+		MakeShareable(new tf2_msgs::TFMessage());
+
+	for (uint32 i = 0; i < NrOfTFMsgTEST; i++)
+	{
+		geometry_msgs::TransformStamped StampedTransformMsg;
+
+		std_msgs::Header Header;
+		Header.SetSeq(Seq);
+		Header.SetFrameId(TEXT("world"));
+		Header.SetStamp(TimeNow);
+
+		geometry_msgs::Transform TransfMsg(
+			geometry_msgs::Vector3(
+				FMath::RandRange(-0.1f, 0.1f) + (0.2*i),
+				FMath::RandRange(-0.2f, 0.2f) + (0.2*i),
+				FMath::RandRange(-0.1f, 0.1f) + (0.2*i)),
+			geometry_msgs::Quaternion(FRotator(
+				FMath::RandRange(-10.f, 10.f) + (0.2*i),
+				FMath::RandRange(-10.f, 10.f) + (0.2*i),
+				FMath::RandRange(-10.f, 10.f) + (0.2*i)).Quaternion()));
+
+		StampedTransformMsg.SetHeader(Header);
+		StampedTransformMsg.SetChildFrameId(FString("child_").Append(FString::FromInt(i)));
+		StampedTransformMsg.SetTransform(TransfMsg);
+
+		NsTFMsgPtr->AddTransform(StampedTransformMsg);
+	}
+
+	// PUB
+	ROSBridgeHandler->PublishMsg("/tf", NsTFMsgPtr);
+
+	/////////////////////////////////////////////////////////////////
 
 
-
-	TSharedPtr<FROSBridgeMsgGeometrymsgsTransform> TrsanformMsg =
-		MakeShareable(new FROSBridgeMsgGeometrymsgsTransform());
-
-	TSharedPtr<FROSBridgeMsgGeometrymsgsVector3> TranslationMsg =
-		MakeShareable(new FROSBridgeMsgGeometrymsgsVector3());
-	FROSBridgeMsgGeometrymsgsVector3 TM(1,2,3);
-
-	TSharedPtr<FROSBridgeMsgGeometrymsgsQuaternion> RotationMsg =
-		MakeShareable(new FROSBridgeMsgGeometrymsgsQuaternion());
-
-
-	
-	TranslationMsg->SetVector(FVector(0));
-	RotationMsg->SetQuat(FQuat(FQuat::Identity));
-
-	TrsanformMsg->SetTranslation(TM);
-	TrsanformMsg->SetTranslation(FROSBridgeMsgGeometrymsgsVector3(0.1f, 0.2f, 0.3f));
-	TrsanformMsg->SetTranslation(*TranslationMsg.Get()); // TODO  PTSharedPtr<FROSBridgeMsg> InMsg
-	TrsanformMsg->SetRotation(*RotationMsg.Get()); // TODO  PTSharedPtr<FROSBridgeMsg> InMsg
-
-	StampedTransformMsg->SetTransform(*TrsanformMsg.Get());
-	//StampedTransformMsg->SetHeader(FROSBridgeMsgStdmsgsHeader();
-
-	ROSBridgeHandler->PublishMsg("/tf", StampedTransformMsg);
 
 	ROSBridgeHandler->Render();
+
+
+	// Update message sequence
+	Seq++;
 }
