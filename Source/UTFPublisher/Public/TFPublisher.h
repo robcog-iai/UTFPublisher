@@ -70,7 +70,7 @@ private:
 	FTimerHandle TFPubTimer;
 
 	// TFTree
-	FTFTree TFTree;
+	FTFTreeNode TFTree;
 
 	// TF header sequence
 	uint32 Seq;

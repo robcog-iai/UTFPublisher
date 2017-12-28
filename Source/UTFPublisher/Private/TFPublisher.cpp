@@ -81,7 +81,7 @@ void ATFPublisher::BuildTFTree()
 	TMap<AActor*, TMap<FString, FString>> TFActorMap =
 		FTagStatics::GetActorsToKeyValuePairs(GetWorld(), "TF");
 
-	FTFTree Tree;
+	FTFTreeNode Tree;
 
 	TMultiMap<FString, UObject*> ParentFrameToObj;
 
