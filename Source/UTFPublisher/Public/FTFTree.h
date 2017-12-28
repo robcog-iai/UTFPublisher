@@ -6,6 +6,18 @@
 #include "CoreTypes.h"
 #include "CoreMinimal.h"
 
+
+struct FTFNode
+{
+	// Name of the (child) frame id
+	FString FrameId;
+
+	// Base object type to get the transform
+	AActor* ActorBaseObject;
+	USceneComponent* SceneComponentBaseObject;
+};
+
+
 /**
 * TFTree - Unordered Tree structure for storing/calculating TF data, containing:
 *
@@ -20,12 +32,12 @@ struct /*UTFPUBLISHER_API*/ FTFTree
 {
 private:
 	// Pointer to parent
-	FTFTree * Parent;
+	FTFTree* Parent;
 
 	// Array of the children subtrees
 	TArray<FTFTree> Children;
 
-	// Name of the (parent) frame id
+	// Name of the (child) frame id
 	FString FrameId;
 
 	// Base object type to get the transform
@@ -34,36 +46,34 @@ private:
 
 	// Get relative transform function pointer variable type
 	typedef FTransform(FTFTree::*RelativeTransformFuncPtrType)();
-
 	// Function pointer to the get the relative transform function
 	RelativeTransformFuncPtrType RelativeTransformFunctionPtr;
 
 	// Get world transform function pointer variable type
 	typedef FTransform(FTFTree::*RelativeTransformFuncPtrType)();
-
 	// Function pointer to the get the world transform function
 	RelativeTransformFuncPtrType WorldTransformFunctionPtr;
 
 public:
-	// Default constructor
+	// Default constructor (no init)
 	FTFTree() : Parent(nullptr) { }
+
+	// Constructor with initialization as UObject and frame id
+	FTFTree(UObject* InObject, FString InFrameId) : Parent(nullptr)
+	{
+		Init(InObject, InFrameId);
+	}
 	
 	// Constructor with initialization as actor and frame id
-	FTFTree(AActor* InActor, FString InFrameId)
-		: ActorBaseObject(InActor), Parent(nullptr), FrameId(InFrameId)
+	FTFTree(AActor* InActor, FString InFrameId) : Parent(nullptr)
 	{
-		// Bind the get transforms functions
-		RelativeTransformFunctionPtr = &FTFTree::GetRelativeTransform_AsActor;
-		WorldTransformFunctionPtr = &FTFTree::GetWorldTransform_AsActor;
+		Init(InActor, InFrameId);
 	}
 	
 	// Constructor with initialization as scene component and frame id
-	FTFTree(USceneComponent* InSceneComponent, FString InFrameId)
-		: SceneComponentBaseObject(InSceneComponent), Parent(nullptr), FrameId(InFrameId)
+	FTFTree(USceneComponent* InSceneComponent, FString InFrameId) : Parent(nullptr)
 	{
-		// Bind the get transforms functions
-		RelativeTransformFunctionPtr = &FTFTree::GetRelativeTransform_AsSceneComponent;
-		WorldTransformFunctionPtr = &FTFTree::GetWorldTransform_AsSceneComponent;
+		Init(InSceneComponent, InFrameId);
 	}
 	
 	// Destructor
@@ -71,7 +81,52 @@ public:
 	{
 		Empty();
 	}
+
+	// Init tree with UObject
+	void Init(UObject* InObject, FString InFrameId)
+	{
+		if (InObject->IsA(AActor::StaticClass()))
+		{
+			Init(Cast<AActor>(InObject), InFrameId);
+		}
+		else if (InObject->IsA(USceneComponent::StaticClass()))
+		{
+			Init(Cast<USceneComponent>(InObject), InFrameId);
+		}
+	}
+
+	// Init tree with AActor
+	void Init(AActor* InActor, FString InFrameId)
+	{
+		ActorBaseObject = InActor;
+		FrameId = InFrameId;
+		// Bind the get transforms functions
+		RelativeTransformFunctionPtr = &FTFTree::GetRelativeTransform_AsActor;
+		WorldTransformFunctionPtr = &FTFTree::GetWorldTransform_AsActor;
+	}
+
+	// Init tree with USceneComponent
+	void Init(USceneComponent* InSceneComponent, FString InFrameId)
+	{
+		SceneComponentBaseObject = InSceneComponent;
+		FrameId = InFrameId;
+		// Bind the get transforms functions
+		RelativeTransformFunctionPtr = &FTFTree::GetRelativeTransform_AsSceneComponent;
+		WorldTransformFunctionPtr = &FTFTree::GetWorldTransform_AsSceneComponent;
+	}
 	
+	// Check if tree is root
+	bool IsRoot() const
+	{
+		return Parent == nullptr;
+	}
+
+	// Check if the tree has children
+	bool HasChildren() const
+	{
+		return Children.Num() == 0;
+	}
+
 	// Empty tree
 	void Empty()
 	{
@@ -110,7 +165,7 @@ public:
 		Children.Add(InChild);
 	}
 	
-	// Add child to the parent frame
+	// Search and add child to the parent frame
 	bool AddChildAtFrameId(FTFTree InChild, const FString& InParentFrameId)
 	{
 		// Check current parent frame id

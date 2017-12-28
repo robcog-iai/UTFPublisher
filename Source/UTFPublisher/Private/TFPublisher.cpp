@@ -78,7 +78,15 @@ void ATFPublisher::Tick(float DeltaTime)
 // Build the tf tree
 void ATFPublisher::BuildTFTree()
 {
-	TMap<AActor*, TMap<FString, FString>> TFActorMap = FTagStatics::GetActorsToKeyValuePairs(GetWorld(), "TF");
+	TMap<AActor*, TMap<FString, FString>> TFActorMap =
+		FTagStatics::GetActorsToKeyValuePairs(GetWorld(), "TF");
+
+	FTFTree Tree;
+
+	TMultiMap<FString, UObject*> ParentFrameToObj;
+
+	/*Tree.Init()*/
+
 	TMap<UActorComponent*, TMap<FString, FString>> TFCompMap = FTagStatics::GetComponentsToKeyValuePairs(GetWorld(), "TF");
 }
 
@@ -157,10 +165,7 @@ void ATFPublisher::PublishTF()
 
 	/////////////////////////////////////////////////////////////////
 
-
-
-	ROSBridgeHandler->Render();
-
+	ROSBridgeHandler->Render2();
 
 	// Update message sequence
 	Seq++;
