@@ -48,7 +48,7 @@ public:
 	UPROPERTY(EditAnywhere, Category = TF, meta = (editcondition = "bUseStaticPublishRate", ClampMin = "0.0"))
 	float StaticPublishRate;
 	
-
+	// TODO RM TEST
 	// Delta time between timer publishing (s)
 	UPROPERTY(EditAnywhere, Category = TF)
 	uint32 NrOfTFMsgTEST;
@@ -70,7 +70,7 @@ private:
 	FTimerHandle TFPubTimer;
 
 	// TFTree
-	FTFTreeNode TFTree;
+	FTFTree TFTree;
 
 	// TF header sequence
 	uint32 Seq;
