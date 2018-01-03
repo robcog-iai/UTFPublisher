@@ -19,3 +19,4 @@ void FUTFPublisherModule::ShutdownModule()
 #undef LOCTEXT_NAMESPACE
 	
 IMPLEMENT_MODULE(FUTFPublisherModule, UTFPublisher)
+DEFINE_LOG_CATEGORY(LogTF);

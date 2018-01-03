@@ -2,130 +2,150 @@
 // Author: Andrei Haidu (http://haidu.eu)
 
 #pragma once
-#include "EngineMinimal.h"
-#include "CoreTypes.h"
-#include "CoreMinimal.h"
+#include "UTFPublisher.h"
+#include "TFData.h"
 
 /**
 *  FTFData - TF related data, containing:
 *
 *  - the name of the frame (child)
 *  - pointer to an entity (AActor or USceneComponent) for FTransform access
-*   for accessing FTransform)
 *  - functionality to return the world transform between itself and its parent
 *
 */
-struct FTFData
-{
-private:
-	// Name of the (child) frame id
-	FString ChildFrameId;
-
-	// Base object type to get the transform
-	AActor* ActorBaseObject;
-	USceneComponent* SceneComponentBaseObject;
-
-	// Get world transform function pointer variable type
-	typedef FTransform(FTFData::*GetTransformFuncPtrType)();
-	// Function pointer to the get the world transform function
-	GetTransformFuncPtrType GetTransformFunctionPtr;
-
-public:
-	// Default constructor (no init)
-	FTFData() { }
-
-	// Constructor with initialization as UObject and frame id
-	FTFData(UObject* InObject, const FString& InFrameId)
-	{
-		Init(InObject, InFrameId);
-	}
-
-	// Constructor with initialization as actor and frame id
-	FTFData(AActor* InActor, const FString& InFrameId)
-	{
-		Init(InActor, InFrameId);
-	}
-
-	// Constructor with initialization as scene component and frame id
-	FTFData(USceneComponent* InSceneComponent, const FString& InFrameId)
-	{
-		Init(InSceneComponent, InFrameId);
-	}
-
-	// Init data with UObject
-	void Init(UObject* InObject, const FString& InFrameId)
-	{
-		if (auto AA = Cast<AActor>(InObject))
-		{
-			Init(AA, InFrameId);
-		}
-		else if (auto USC = Cast<USceneComponent>(InObject))
-		{
-			Init(USC, InFrameId);
-		}
-		//if (InObject->IsA(AActor::StaticClass()))
-		//{
-		//	Init(Cast<AActor>(InObject), InFrameId);
-		//}
-		//else if (InObject->IsA(USceneComponent::StaticClass()))
-		//{
-		//	Init(Cast<USceneComponent>(InObject), InFrameId);
-		//}
-	}
-
-	// Init data with AActor
-	void Init(AActor* InActor, const FString& InFrameId)
-	{
-		ActorBaseObject = InActor;
-		ChildFrameId = InFrameId;
-		// Bind the transform function ptr
-		GetTransformFunctionPtr = &FTFData::GetTransform_AsActor;
-	}
-
-	// Init data with USceneComponent
-	void Init(USceneComponent* InSceneComponent, const FString& InFrameId)
-	{
-		SceneComponentBaseObject = InSceneComponent;
-		ChildFrameId = InFrameId;
-		// Bind the transform function ptr
-		GetTransformFunctionPtr = &FTFData::GetTransform_AsSceneComponent;
-	}
-
-	// Get the frame id name
-	FString GetFrameId() const
-	{
-		return ChildFrameId;
-	}
-
-	// Get transform
-	const FTransform& GetTransform()
-	{
-		return (this->*GetTransformFunctionPtr)();
-	}
-
-private:
-	// Get the world transform of actor
-	FORCEINLINE FTransform GetTransform_AsActor()
-	{
-		return ActorBaseObject->GetActorTransform();
-	}
-
-	// Get the world transform of scene component
-	FORCEINLINE FTransform GetTransform_AsSceneComponent()
-	{
-		return SceneComponentBaseObject->GetComponentTransform();
-	}
-};
+//struct UTFPUBLISHER_API FTFData
+//{
+//private:
+//	// Name of the (child) frame id
+//	FString ChildFrameId;
+//
+//	// Base object type to get the transform
+//	UPROPERTY()
+//	AActor* ActorBaseObject;
+//	UPROPERTY()
+//	USceneComponent* SceneComponentBaseObject;
+//
+//	// Get world transform function pointer variable type
+//	typedef FTransform(FTFData::*GetTransformFuncPtrType)();
+//	// Function pointer to the get the world transform function
+//	GetTransformFuncPtrType GetTransformFunctionPtr;
+//
+//public:
+//	// Default constructor (no init)
+//	FTFData() : ActorBaseObject(nullptr), SceneComponentBaseObject(nullptr)
+//	{ }
+//
+//	// Constructor with initialization as UObject and frame id
+//	FTFData(UObject* InObject, const FString& InFrameId) : 
+//		ActorBaseObject(nullptr), SceneComponentBaseObject(nullptr)
+//	{
+//		Init(InObject, InFrameId);
+//	}
+//
+//	// Constructor with initialization as actor and frame id
+//	FTFData(AActor* InActor, const FString& InFrameId) :
+//		ActorBaseObject(nullptr), SceneComponentBaseObject(nullptr)
+//	{
+//		Init(InActor, InFrameId);
+//	}
+//
+//	// Constructor with initialization as scene component and frame id
+//	FTFData(USceneComponent* InSceneComponent, const FString& InFrameId) :
+//		ActorBaseObject(nullptr), SceneComponentBaseObject(nullptr)
+//	{
+//		Init(InSceneComponent, InFrameId);
+//	}
+//
+//	// Init data with UObject
+//	void Init(UObject* InObject, const FString& InFrameId)
+//	{
+//		if (const auto& AA = Cast<AActor>(InObject))
+//		{
+//			Init(AA, InFrameId);
+//		}
+//		else if (const auto& USC = Cast<USceneComponent>(InObject))
+//		{
+//			Init(USC, InFrameId);
+//		}
+//	}
+//
+//	// Init data with AActor
+//	void Init(AActor* InActor, const FString& InFrameId)
+//	{
+//		ActorBaseObject = InActor;
+//		ChildFrameId = InFrameId;
+//		// Bind the transform function ptr
+//		GetTransformFunctionPtr = &FTFData::GetTransform_AsActor;
+//		//InActor->OnDestroyed.AddDynamic(this, &FTFData::OnActorDestroyed);
+//	}
+//
+//	// Init data with USceneComponent
+//	void Init(USceneComponent* InSceneComponent, const FString& InFrameId)
+//	{
+//		SceneComponentBaseObject = InSceneComponent;
+//		ChildFrameId = InFrameId;
+//		// Bind the transform function ptr
+//		GetTransformFunctionPtr = &FTFData::GetTransform_AsSceneComponent;
+//	}
+//
+//	// Get the frame id name
+//	const FString& GetFrameId() const
+//	{
+//		return ChildFrameId;
+//	}
+//
+//	// Get transform
+//	const FTransform& GetTransform()
+//	{
+//		return (this->*GetTransformFunctionPtr)();
+//	}
+//
+//	// Output the tf data as string
+//	FString ToString() const
+//	{
+//		FString BaseObjName = TEXT("NONE");
+//		if (ActorBaseObject != nullptr && !ActorBaseObject->IsPendingKill())
+//		{
+//			BaseObjName = ActorBaseObject->GetName();
+//		}
+//		else if(SceneComponentBaseObject != nullptr && !SceneComponentBaseObject->IsPendingKill())
+//		{
+//			BaseObjName = SceneComponentBaseObject->GetName();
+//		}
+//		return FString::Printf(TEXT("ChildFrameId=%s, BaseObjectName=%s"),
+//			*ChildFrameId, *BaseObjName);
+//	}
+//
+//private:
+//	//UFUNCTION()
+//	//void OnActorDestroyed(AActor* DestroyedActor)
+//	//{
+//	//	UE_LOG(LogTF, Warning, TEXT(" Actor destroyed !!! "));
+//	//	ActorBaseObject = nullptr;
+//	//}
+//
+//	// Get the world transform of actor
+//	FORCEINLINE FTransform GetTransform_AsActor()
+//	{
+//		return ActorBaseObject->GetActorTransform();
+//	}
+//
+//	// Get the world transform of scene component
+//	FORCEINLINE FTransform GetTransform_AsSceneComponent()
+//	{
+//		return SceneComponentBaseObject->GetComponentTransform();
+//	}
+//};
 
 /**
-*  FTFNode - Unordered Tree structure for storing/calculating TF data, containing:
+*  FTFTreeNode - Unordered Tree structure for storing/calculating TF data, containing:
 *
 *  - a pointer to its parent node (nullptr) if it is the root of the tree
 *  - an array of its children nodes
 *  - functionality to return the transform between itself and its parent
 *
 */
-struct FTFTreeNode
+struct UTFPUBLISHER_API FTFTreeNode
 {
 private:
 	// Pointer to parent
@@ -135,33 +155,66 @@ private:
 	TArray<FTFTreeNode> Children;
 
 	// TF data
-	FTFData TFData;
+	UTFData* TFData;
 
 public:
 	// Default constructor (no init)
-	FTFTreeNode() : Parent(nullptr) { }
+	FTFTreeNode() : Parent(nullptr), TFData(NewObject<UTFData>()) { }
 
-	// Constructor with initialization
-	FTFTreeNode(FTFData InTFData) : TFData(InTFData), Parent(nullptr) { }
+	// Constructor with TFData
+	FTFTreeNode(UTFData* InTFData) : Parent(nullptr), TFData(InTFData)	{ }
 
 	// Constructor with initialization as UObject and frame id
-	FTFTreeNode(UObject* InObject, const FString& InFrameId) : Parent(nullptr)
+	FTFTreeNode(UObject* InObject, const FString& InFrameId, UObject* InOuter = (UObject*)nullptr)
+		: Parent(nullptr)
 	{
-		TFData = FTFData(InObject, InFrameId);
+		// Avoid garbage collection of the TF Data by setting its parent as root or the Outer object
+		if (InOuter == nullptr)
+		{
+			TFData = NewObject<UTFData>(/*InObject, FName(*FString("TFData_").Append(InFrameId))*/); // Crashes at gameplay stop if other than default Outer
+			TFData->AddToRoot();
+		}
+		else
+		{
+			TFData = NewObject<UTFData>(InOuter, FName(*FString("TFData_").Append(InFrameId)));
+		}
+		TFData->Init(InObject, InFrameId);
 	}
 
 	// Constructor with initialization as actor and frame id
-	FTFTreeNode(AActor* InActor, const FString& InFrameId) : Parent(nullptr)
+	FTFTreeNode(AActor* InActor, const FString& InFrameId, UObject* InOuter = (UObject*)nullptr)
+		: Parent(nullptr)
 	{
-		TFData = FTFData(InActor, InFrameId);
+		// Avoid garbage collection of the TF Data by setting its parent as root or the Outer object
+		if (InOuter == nullptr)
+		{
+			TFData = NewObject<UTFData>(/*InActor, FName(*FString("TFData_").Append(InFrameId))*/); // Crashes at gameplay stop if other than default Outer
+			TFData->AddToRoot();
+		}
+		else
+		{
+			TFData = NewObject<UTFData>(InOuter, FName(*FString("TFData_").Append(InFrameId)));
+		}
+		TFData->Init(InActor, InFrameId);
 	}
 
 	// Constructor with initialization as scene component and frame id
-	FTFTreeNode(USceneComponent* InSceneComponent, const FString& InFrameId) : Parent(nullptr)
+	FTFTreeNode(USceneComponent* InSceneComponent, const FString& InFrameId, UObject* InOuter = (UObject*)nullptr)
+		: Parent(nullptr)
 	{
-		TFData = FTFData(InSceneComponent, InFrameId);
+		// Avoid garbage collection of the TF Data by setting its parent as root or the Outer object
+		if (InOuter == nullptr)
+		{
+			TFData = NewObject<UTFData>(/*InSceneComponent, FName(*FString("TFData_").Append(InFrameId))*/); // Crashes at gameplay stop if other than default Outer
+			TFData->AddToRoot();
+		}
+		else
+		{
+			TFData = NewObject<UTFData>(InOuter, FName(*FString("TFData_").Append(InFrameId)));
+		}
+		TFData->Init(InSceneComponent, InFrameId);
 	}
-	
+
 	// Destructor
 	~FTFTreeNode()
 	{
@@ -175,18 +228,6 @@ public:
 		Parent = nullptr;
 	}
 	
-	// Check if tree is root
-	FORCEINLINE bool IsRoot() const
-	{
-		return Parent == nullptr;
-	}
-
-	// Check if the tree has children
-	FORCEINLINE bool HasChildren() const
-	{
-		return Children.Num() == 0;
-	}
-	
 	// Set parent
 	void SetParent(FTFTreeNode* InParent)
 	{
@@ -194,22 +235,34 @@ public:
 	}
 	
 	// Get parent
-	FTFTreeNode* GetParent() const
+	FORCEINLINE FTFTreeNode* GetParent() const
 	{
 		return Parent;
 	}
+		
+	// Check if tree has parent
+	FORCEINLINE bool HasParent() const
+	{
+		return Parent != nullptr;
+	}
+
+	// Get the tf data
+	UTFData* GetTFData() const
+	{
+		return TFData;
+	}
 	
 	// Get the frame id name
-	FString GetFrameId() const
+	const FString& GetFrameId() const
 	{
-		return TFData.GetFrameId();
+		return TFData->GetFrameId();
 	}
 	
 	// Add child to node
-	void AddChild(FTFTreeNode InChild)
+	void AddChild(FTFTreeNode& InChild)
 	{
 		InChild.SetParent(this);
-		Children.Add(InChild);
+		Children.Emplace(InChild);
 	}
 	
 	// Get array children
@@ -219,72 +272,109 @@ public:
 	}
 
 	// Get the relative transform between the parent and the current item
-	FORCEINLINE FTransform GetRelativeTransform()
+	FORCEINLINE FTransform GetTransform()
 	{
 		// Check if we are root
 		if (Parent == nullptr)
 		{
 			// Return world transform
-			return TFData.GetTransform();
+			return TFData->GetTransform();
 		}
 		else
 		{
 			// Return transform relative to parent
-			return TFData.GetTransform().GetRelativeTransform(
-				Parent->TFData.GetTransform());
+			return TFData->GetTransform().GetRelativeTransform(
+				Parent->GetTFData()->GetTransform());
 		}
 	}
 
+	//// Find node with the given frame id
+	//bool GetNode(const FString& InFrameId, FTFTreeNode* OutNode)
+	//{
+	//	// Check current frame id
+	//	if (GetFrameId().Equals(InFrameId))
+	//	{
+	//		OutNode = this;
+	//		return true;
+	//	}
+	//	else
+	//	{
+	//		// Check every child frame id
+	//		for (auto& ChildItr : Children)
+	//		{
+	//			return ChildItr.GetNode(InFrameId, OutNode);
+	//		}
+	//	}
+	//	return false;
+	//}
+
 	// Find node with the given frame id
-	bool FindNode(const FString& InFrameId, FTFTreeNode& OutNode)
+	FTFTreeNode* GetNode(const FString& InFrameId)
 	{
 		// Check current frame id
 		if (GetFrameId().Equals(InFrameId))
 		{
-			OutNode = *this;
-			return true;
+			return this;
 		}
 		else
 		{
 			// Check every child frame id
-			for (auto& ChildItr : GetChildren())
+			for (auto& ChildItr : Children)
 			{
-				return ChildItr.FindNode(InFrameId, OutNode);
+				return ChildItr.GetNode(InFrameId);
 			}
 		}
-		return false;
+		return nullptr;
 	}
 
-	// Counts all elements in the tree
-	int32 CountElements()
+	// Depth first traversal pre-order
+	void DFSTraversalPre(FTFTreeNode& InNode)
 	{
-		return CountAllChildren() + 1; // + the root node
-	}
-
-private:
-	// Counts all the children in the tree recursively
-	int32 CountAllChildren()
-	{
-		int32 Counter = 0;
-		Counter = GetChildren().Num();
-		// Check every child frame id
-		for (auto& ChildItr : GetChildren())
+		UE_LOG(LogTF, Warning, TEXT("\t %s"), *InNode.ToString());
+		for (auto& ChildItr : InNode.GetChildren())
 		{
-			Counter += ChildItr.CountAllChildren();
+			DFSTraversalPre(ChildItr);
 		}
-		return Counter;
+	}
+
+	// Depth first traversal post-order
+	void DFSTraversalPost(FTFTreeNode& InNode)
+	{
+		for (auto& ChildItr : InNode.GetChildren())
+		{
+			DFSTraversalPost(ChildItr);
+		}
+		UE_LOG(LogTF, Warning, TEXT("\t %s"), *InNode.ToString());
+	}
+
+	// Output the tf tree node as string
+	FString ToString() const
+	{
+		UE_LOG(LogTF, Warning, TEXT("[%s]"), *FString(__FUNCTION__));
+		if (HasParent())
+		{
+			UE_LOG(LogTF, Warning, TEXT("[%s] HasParent "), *FString(__FUNCTION__));
+			return FString::Printf(TEXT("Parent: %s; Node: %s"),
+				*Parent->GetTFData()->ToString(), *TFData->ToString());
+		}
+		else
+		{
+			UE_LOG(LogTF, Warning, TEXT("[%s] NoParent"), *FString(__FUNCTION__));
+			return FString::Printf(TEXT("Parent: NONE; Node: %s"),
+				*TFData->ToString());
+		}
 	}
 };
 
 /**
-*  FTFTree  
+*  FTFTree (World TF Tree)
 *
 *  - Array of root nodes representing a virtual connection with the
-*    'world node', all nodes having the world as its parent will be a root node
+*    'World node', all nodes having the world as its parent will be a root node
 *  - functionality to add tf tree nodes to the needed frames
 *
 */
-struct FTFTree
+struct UTFPUBLISHER_API FTFWorldTree
 {
 private:
 	// Array of roots (since world cannot be a node)
@@ -292,18 +382,20 @@ private:
 
 public:
 	// Default constructor
-	FTFTree() {}
+	FTFWorldTree() {}
 
 	// Constructor with root init
-	FTFTree(const TArray<FTFTreeNode>& InRoots) : Roots(InRoots) { }
+	FTFWorldTree(const TArray<FTFTreeNode>& InRoots) : Roots(InRoots) { }
 
-	// Search and add child to the parent frame
-	bool AddNodeAt(FTFTreeNode InNode, const FString& InParentFrameId)
+	// Add node to the world tf tree (by default root parent frame)
+	bool AddNode(FTFTreeNode InNode, const FString& InParentFrameId = TEXT("World"))
 	{
 		if (InParentFrameId.Equals(TEXT("World")))
 		{
 			// Add as a root (parent is world)
-			Roots.Add(InNode);
+			Roots.Emplace(InNode);
+			UE_LOG(LogTF, Warning, TEXT(" \t\t [%s] added (as root)"),
+				*InNode.ToString());
 			return true;
 		}
 		else
@@ -311,10 +403,28 @@ public:
 			// Search for the parent frame in every tree node
 			for (auto& RootItr : Roots)
 			{
-				FTFTreeNode FoundNode;
-				if (RootItr.FindNode(InParentFrameId, FoundNode))
+				FTFTreeNode* FoundNode = nullptr;
+				//if (RootItr.GetNode(InParentFrameId, FoundNode))
+				//{
+				//	if (FoundNode != nullptr)
+				//	{
+				//		UE_LOG(LogTF, Warning, TEXT(" found node: %s in root: %s"),
+				//			*FoundNode->GetFrameId(), *RootItr.GetFrameId());
+				//		FoundNode->AddChild(InNode);
+				//		return true;
+				//	}
+				//	else 
+				//	{
+				//		UE_LOG(LogTF, Warning, TEXT(" found node: nullptr"));
+				//	}
+				//}
+
+				FoundNode = RootItr.GetNode(InParentFrameId);
+				if (FoundNode != nullptr)
 				{
-					FoundNode.AddChild(InNode);
+					FoundNode->AddChild(InNode);
+					UE_LOG(LogTF, Warning, TEXT(" \t\t [%s] added"),
+						*InNode.ToString());
 					return true;
 				}
 			}
@@ -322,14 +432,19 @@ public:
 		return false;
 	}
 
-	// Counts all elements in the tree
-	int32 CountElements()
+	// Traverse world tf tree
+	void Traverse()
 	{
-		int32 Count = 0;
 		for (auto& RootItr : Roots)
 		{
-			Count += RootItr.CountElements();
+			UE_LOG(LogTF, Warning, TEXT(" T \n"));
+			RootItr.DFSTraversalPre(RootItr);
 		}
-		return Count;
+
+		//for (auto& RootItr : Roots)
+		//{
+		//	UE_LOG(LogTF, Warning, TEXT(" T \n"));
+		//	RootItr.DFSTraversalPost(RootItr);
+		//}
 	}
 };

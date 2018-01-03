@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
+#include "UTFPublisher.h" // CoreMinimal, LogTF
 #include "GameFramework/Actor.h"
 #include "ROSBridgeHandler.h"
 #include "ROSBridgePublisher.h"
@@ -54,6 +54,9 @@ public:
 	uint32 NrOfTFMsgTEST;
 	
 private:
+	UFUNCTION()
+	void OnActorDestroyed(AActor* DestroyedActor);
+
 	// Build the tf tree
 	void BuildTFTree();
 
@@ -70,8 +73,10 @@ private:
 	FTimerHandle TFPubTimer;
 
 	// TFTree
-	FTFTree TFTree;
+	FTFWorldTree TFWorldTree;
 
 	// TF header sequence
 	uint32 Seq;
+
+	TArray<UTFData*> Datas;
 };
