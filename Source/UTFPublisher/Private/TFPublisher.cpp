@@ -1,10 +1,10 @@
-// Copyright 2017, Institute for Artificial Intelligence - University of Bremen
+// Copyright 2018, Institute for Artificial Intelligence - University of Bremen
 // Author: Andrei Haidu (http://haidu.eu)
 
 #include "TFPublisher.h"
 #include "TagStatics.h"
 #include "CoordConvStatics.h"
-#include "FTFTree.h"
+//#include "FTFTree.h"
 #include "tf2_msgs/TFMessage.h"
 
 // Sets default values
@@ -28,6 +28,12 @@ ATFPublisher::ATFPublisher()
 void ATFPublisher::BeginPlay()
 {
 	Super::BeginPlay();
+
+	// Create the tf world tree object
+	TFWWorldTree = NewObject<UTFWorldTree>(this, TEXT("TFWorldTree"));
+
+	// Build the tf tree
+	BuildTFTree();
 
 	//// Create the ROSBridge handler for connecting with ROS
 	//ROSBridgeHandler = MakeShareable<FROSBridgeHandler>(
@@ -58,9 +64,6 @@ void ATFPublisher::BeginPlay()
 	//{
 	//	// Take into account the PublishRate Tag key value pair (if missing, publish on tick)
 	//}
-
-	// Build the tf tree
-	BuildTFTree();
 }
 
 // Called when destroyed or game stopped
@@ -84,25 +87,22 @@ void ATFPublisher::BuildTFTree()
 	// Get all objects with TF tags
 	auto ObjToTagData = FTagStatics::GetObjectsToKeyValuePairs(GetWorld(), TEXT("TF"));
 
-	for (auto MapItr(ObjToTagData.CreateIterator()); MapItr; ++MapItr)
-	{
-		UE_LOG(LogTF, Warning, TEXT(" \t %s's tags:"), *MapItr->Key->GetName());
-		for (const auto& KeyValItr : MapItr->Value)
-		{
-			UE_LOG(LogTF, Warning, TEXT(" \t \t %s - %s:"), *KeyValItr.Key, *KeyValItr.Value);
-		}
-		UE_LOG(LogTF, Warning, TEXT(" ---- \n"), *MapItr->Key->GetName());
-	}
+	//for (auto MapItr(ObjToTagData.CreateIterator()); MapItr; ++MapItr)
+	//{
+	//	UE_LOG(LogTF, Warning, TEXT(" \t %s's tags:"), *MapItr->Key->GetName());
+	//	for (const auto& KeyValItr : MapItr->Value)
+	//	{
+	//		UE_LOG(LogTF, Warning, TEXT(" \t \t %s - %s:"), *KeyValItr.Key, *KeyValItr.Value);
+	//	}
+	//	UE_LOG(LogTF, Warning, TEXT(" ---- \n"), *MapItr->Key->GetName());
+	//}
 
-	UE_LOG(LogTF, Warning, TEXT(" ** Adding objects to world tf tree (WHILE LOOP) ** \n"));
 	// Try adding objects to the tf tree until no more objects in the map
 	// and the map size has changed
 	bool bMapSizeChanged = true;
 	while (ObjToTagData.Num() > 0 && bMapSizeChanged)
 	{
 		int32 MapSize = ObjToTagData.Num();
-		UE_LOG(LogTF, Warning, TEXT(" ***** Curr map size: %i \n"), MapSize);
-
 		// Iterate map and try adding objects to tree
 		for (auto MapItr(ObjToTagData.CreateIterator()); MapItr; ++MapItr)
 		{
@@ -122,30 +122,25 @@ void ATFPublisher::BuildTFTree()
 			}
 
 			// Try to add node to tree
-			if (TFWorldTree.AddNode(FTFTreeNode(MapItr->Key, ChildFrameId, this), ParentFrameId))
+			if (TFWWorldTree->AddNode(MapItr->Key, ChildFrameId, ParentFrameId))
 			{
-				UE_LOG(LogTF, Warning, TEXT(" \t %s - Successfully added to parent: %s \n\n"),
+				UE_LOG(LogTF, Warning, TEXT(" \t Added %s to %s \n"),
 					*ChildFrameId, *ParentFrameId);
 				MapItr.RemoveCurrent();
-			}
-			else
-			{
-				UE_LOG(LogTF, Warning, TEXT(" \t %s - Could not find parent: % (yet) \n\n"),
-					*ChildFrameId, *ParentFrameId);
 			}
 		}
 
 		// Check if the map size has changed
 		if (MapSize == ObjToTagData.Num())
 		{
-			UE_LOG(LogTF, Warning, TEXT(" \t Map size did not shrink, while loop stopped!"));
 			bMapSizeChanged = false;
 		}
 	}
 
-	UE_LOG(LogTF, Warning, TEXT(" \t\t ****** \n"));
+	UE_LOG(LogTF, Warning, TEXT(" Current TF trees: \n %s \n "), *TFWWorldTree->ToString());
 
-	UE_LOG(LogTF, Warning, TEXT(" Remaining objects: %i"), ObjToTagData.Num());
+	UE_LOG(LogTF, Error, TEXT("%i items have no parents, adding them as separate root tf trees: "),
+		ObjToTagData.Num());
 	for (auto MapItr(ObjToTagData.CreateIterator()); MapItr; ++MapItr)
 	{
 		UE_LOG(LogTF, Warning, TEXT(" \t %s's tags:"), *MapItr->Key->GetName());
@@ -154,60 +149,43 @@ void ATFPublisher::BuildTFTree()
 			UE_LOG(LogTF, Warning, TEXT(" \t \t %s - %s:"), *KeyValItr.Key, *KeyValItr.Value);
 		}
 		UE_LOG(LogTF, Warning, TEXT(" ---- \n"), *MapItr->Key->GetName());
-	}
-
-	UE_LOG(LogTF, Warning, TEXT(" Traverse pre order: "));
-	TFWorldTree.Traverse();
-	UE_LOG(LogTF, Warning, TEXT(" **** \n\n\n "));
-
-	UE_LOG(LogTF, Warning, TEXT(" \t\t ****** \n"));
-
-	UE_LOG(LogTF, Warning, TEXT(" *** Iterating remaining tagged objects: *** "));
-	// Add the rest nodes as World parent
-	for (auto& MapItr : ObjToTagData)
-	{
-		UE_LOG(LogTF, Warning, TEXT(" \t %s's tags:"), *MapItr.Key->GetName());
-		for (const auto& KeyValItr : MapItr.Value)
-		{
-			UE_LOG(LogTF, Warning, TEXT(" \t \t %s - %s:"), *KeyValItr.Key, *KeyValItr.Value);
-		}
 
 		// Frame Ids default values
-		FString ChildFrameId = MapItr.Key->GetName();
+		FString ChildFrameId = MapItr->Key->GetName();
 		// Parent will be forced as World
 		const FString ParentFrameId = TEXT("World");
 
 		// Set child frame id from tag
-		if (MapItr.Value.Contains(TEXT("ChildFrameId")))
+		if (MapItr->Value.Contains(TEXT("ChildFrameId")))
 		{
-			ChildFrameId = MapItr.Value["ChildFrameId"];
+			ChildFrameId = MapItr->Value["ChildFrameId"];
 		}
-		if (TFWorldTree.AddNode(FTFTreeNode(MapItr.Key, ChildFrameId, this), ParentFrameId))
+
+		if (TFWWorldTree->AddNode(MapItr->Key, ChildFrameId, ParentFrameId))
 		{
 			UE_LOG(LogTF, Warning, TEXT(" \t %s - Successfully added to parent: %s \n\n"),
 				*ChildFrameId, *ParentFrameId);
+			MapItr.RemoveCurrent();
 		}
-		else
-		{
-			UE_LOG(LogTF, Warning, TEXT(" \t %s - Could not find parent: %s (yet) \n\n"),
-				*ChildFrameId, *ParentFrameId);
-		}
-
 	}
 
-	UE_LOG(LogTF, Warning, TEXT(" \t\t *** END *** "));
+	UE_LOG(LogTF, Error, TEXT("%i items could not pe added to the tf trees"),
+		ObjToTagData.Num());
 
-	// Empty map if it still has elements
-	ObjToTagData.Empty();
+	TFNodes = TFWWorldTree->GetNodesAsArray();
 }
 
 // Publish tf tree
 void ATFPublisher::PublishTF()
 {
-	UE_LOG(LogTF, Warning, TEXT(" PUB Traverse pre order: "));
-	TFWorldTree.Traverse();
-	UE_LOG(LogTF, Warning, TEXT(" **** \n\n\n "));
-
+	UE_LOG(LogTF, Warning, TEXT(" \t\tSTART TREES --> "));
+	UE_LOG(LogTF, Warning, TEXT(" %s \n "), *TFWWorldTree->ToString());
+	UE_LOG(LogTF, Warning, TEXT(" \t\t AS ARRAY : "));
+	for (const auto& NodeItr : TFNodes)
+	{
+		UE_LOG(LogTF, Warning, TEXT(" %s \n \t "), *NodeItr->ToString());
+	}
+	UE_LOG(LogTF, Warning, TEXT(" \t\t <-- END TREES *** "));
 
 	//// Current time as ROS time
 	//FROSTime TimeNow = FROSTime::Now();

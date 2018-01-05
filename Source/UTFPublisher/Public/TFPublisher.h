@@ -1,4 +1,4 @@
-// Copyright 2017, Institute for Artificial Intelligence - University of Bremen
+// Copyright 2018, Institute for Artificial Intelligence - University of Bremen
 // Author: Andrei Haidu (http://haidu.eu)
 
 #pragma once
@@ -7,8 +7,7 @@
 #include "GameFramework/Actor.h"
 #include "ROSBridgeHandler.h"
 #include "ROSBridgePublisher.h"
-#include "Math/Vector4.h"
-#include "FTFTree.h"
+#include "TFWorldTree.h"
 #include "TFPublisher.generated.h"
 
 UCLASS()
@@ -72,11 +71,12 @@ private:
 	// Publisher timer handle (in case of custom publish rate)
 	FTimerHandle TFPubTimer;
 
-	// TFTree
-	FTFWorldTree TFWorldTree;
+	// TF World Tree (representing all tf trees connected to World)
+	UTFWorldTree* TFWWorldTree;
+
+	// Array of all the TFNodes for quick iteration to create TF messages
+	TArray<UTFNode*> TFNodes;
 
 	// TF header sequence
 	uint32 Seq;
-
-	TArray<UTFData*> Datas;
 };

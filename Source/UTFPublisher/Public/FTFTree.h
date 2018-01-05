@@ -1,4 +1,4 @@
-// Copyright 2017, Institute for Artificial Intelligence - University of Bremen
+// Copyright 2018, Institute for Artificial Intelligence - University of Bremen
 // Author: Andrei Haidu (http://haidu.eu)
 
 #pragma once
@@ -271,22 +271,7 @@ public:
 		return Children;
 	}
 
-	// Get the relative transform between the parent and the current item
-	FORCEINLINE FTransform GetTransform()
-	{
-		// Check if we are root
-		if (Parent == nullptr)
-		{
-			// Return world transform
-			return TFData->GetTransform();
-		}
-		else
-		{
-			// Return transform relative to parent
-			return TFData->GetTransform().GetRelativeTransform(
-				Parent->GetTFData()->GetTransform());
-		}
-	}
+
 
 	//// Find node with the given frame id
 	//bool GetNode(const FString& InFrameId, FTFTreeNode* OutNode)
@@ -337,6 +322,23 @@ public:
 		}
 	}
 
+	// Depth first traversal pre-order
+	void DFSTraversalPreItr(FTFTreeNode& InNode)
+	{
+		TArray<FTFTreeNode> Stack;
+		Stack.Push(InNode);
+
+		while (Stack.Num() > 0)
+		{
+			FTFTreeNode CurrNode = Stack.Pop();
+			UE_LOG(LogTF, Warning, TEXT("\t %s"), *CurrNode.ToString());
+			for (auto& ChildItr : CurrNode.GetChildren())
+			{
+				Stack.Push(ChildItr);
+			}
+		}
+	}
+
 	// Depth first traversal post-order
 	void DFSTraversalPost(FTFTreeNode& InNode)
 	{
@@ -350,18 +352,35 @@ public:
 	// Output the tf tree node as string
 	FString ToString() const
 	{
-		UE_LOG(LogTF, Warning, TEXT("[%s]"), *FString(__FUNCTION__));
+		//UE_LOG(LogTF, Warning, TEXT("[%s]"), *FString(__FUNCTION__));
 		if (HasParent())
 		{
-			UE_LOG(LogTF, Warning, TEXT("[%s] HasParent "), *FString(__FUNCTION__));
-			return FString::Printf(TEXT("Parent: %s; Node: %s"),
+			//UE_LOG(LogTF, Warning, TEXT("[%s] HasParent "), *FString(__FUNCTION__));
+			return FString::Printf(TEXT("(%s) --> (%s)"),
 				*Parent->GetTFData()->ToString(), *TFData->ToString());
 		}
 		else
 		{
-			UE_LOG(LogTF, Warning, TEXT("[%s] NoParent"), *FString(__FUNCTION__));
-			return FString::Printf(TEXT("Parent: NONE; Node: %s"),
+			//UE_LOG(LogTF, Warning, TEXT("[%s] NoParent"), *FString(__FUNCTION__));
+			return FString::Printf(TEXT("(World) --> (%s)"),
 				*TFData->ToString());
+		}
+	}
+
+	// Get the relative transform between the parent and the current item
+	FORCEINLINE FTransform GetTransform()
+	{
+		// Check if we are root
+		if (Parent == nullptr)
+		{
+			// Return world transform
+			return TFData->GetTransform();
+		}
+		else
+		{
+			// Return transform relative to parent
+			return TFData->GetTransform().GetRelativeTransform(
+				Parent->GetTFData()->GetTransform());
 		}
 	}
 };
@@ -438,7 +457,7 @@ public:
 		for (auto& RootItr : Roots)
 		{
 			UE_LOG(LogTF, Warning, TEXT(" T \n"));
-			RootItr.DFSTraversalPre(RootItr);
+			RootItr.DFSTraversalPreItr(RootItr);
 		}
 
 		//for (auto& RootItr : Roots)

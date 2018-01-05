@@ -129,38 +129,38 @@ FORCEINLINE FTransform UTFData::GetTransform_AsSceneComponent()
 // Output the tf data as string
 FString UTFData::ToString() const
 {
-	UE_LOG(LogTF, Warning, TEXT("[%s] ActorBaseObject: %p, SceneComponentBaseObject: %p"),
-		*FString(__FUNCTION__), ActorBaseObject, SceneComponentBaseObject);
-	FString BaseObjName = TEXT("NONE");
-	if (ActorBaseObject && ActorBaseObject->IsValidLowLevel())
+	//UE_LOG(LogTF, Warning, TEXT("[%s] ActorBaseObject: %p, SceneComponentBaseObject: %p"),
+	//	*FString(__FUNCTION__), ActorBaseObject, SceneComponentBaseObject);
+	FString BaseObjName;// = TEXT("default_name");
+	if (ActorBaseObject/* && ActorBaseObject->IsValidLowLevel()*/)
 	{
-		UE_LOG(LogTF, Warning, TEXT("[%s] ActorBaseObject->IsValidLowLevel()"), *FString(__FUNCTION__));
+		//UE_LOG(LogTF, Warning, TEXT("[%s] ActorBaseObject->IsValidLowLevel()"), *FString(__FUNCTION__));
 		BaseObjName = ActorBaseObject->GetName();
 	}
-	else if (SceneComponentBaseObject && SceneComponentBaseObject->IsValidLowLevel())
+	else if (SceneComponentBaseObject/* && SceneComponentBaseObject->IsValidLowLevel()*/)
 	{
-		UE_LOG(LogTF, Warning, TEXT("[%s] SceneComponentBaseObject->IsValidLowLevel()"), *FString(__FUNCTION__));
+		//UE_LOG(LogTF, Warning, TEXT("[%s] SceneComponentBaseObject->IsValidLowLevel()"), *FString(__FUNCTION__));
 		BaseObjName = SceneComponentBaseObject->GetName();
 	}
 	else
 	{
 		UE_LOG(LogTF, Warning, TEXT("[%s] Nope RM)"), *FString(__FUNCTION__));
-		// TODO else remove from tree
-		UE_LOG(LogTF, Warning, TEXT("[%s] TODO RM Node from tree "),
-			*FString(__FUNCTION__));
+		//// TODO else remove from tree
+		//UE_LOG(LogTF, Warning, TEXT("[%s] TODO RM Node from tree "),
+		//	*FString(__FUNCTION__));
 	}
 
 
-	if (SceneComponentBaseObject == nullptr)
-	{
-		UE_LOG(LogTF, Warning, TEXT("[%s] NULLPTR  %p"),
-			*FString(__FUNCTION__), SceneComponentBaseObject);
-	}
-	else
-	{
-		UE_LOG(LogTF, Warning, TEXT("[%s] NOOT NULLPTR ll %s  %p"),
-			*FString(__FUNCTION__), *SceneComponentBaseObject->GetName(), SceneComponentBaseObject);
-	}
+	//if (SceneComponentBaseObject == nullptr)
+	//{
+	//	UE_LOG(LogTF, Warning, TEXT("[%s] NULLPTR  %p"),
+	//		*FString(__FUNCTION__), SceneComponentBaseObject);
+	//}
+	//else
+	//{
+	//	UE_LOG(LogTF, Warning, TEXT("[%s] NOOT NULLPTR ll %s  %p"),
+	//		*FString(__FUNCTION__), *SceneComponentBaseObject->GetName(), SceneComponentBaseObject);
+	//}
 
 	return FString::Printf(TEXT("ChildFrameId=%s, BaseObjectName=%s"),
 		*ChildFrameId, *BaseObjName);
