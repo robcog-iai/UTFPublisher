@@ -66,6 +66,7 @@ bool UTFTree::AddNodeAt(UTFNode* InNode, const FString& InFrameId)
 	if (ParentNode != nullptr)
 	{
 		ParentNode->Children.Emplace(InNode);
+		InNode->Parent = ParentNode;
 		return true;
 	}
 	return false; // Frame id was not found
