@@ -42,7 +42,7 @@ public:
 	bool RemoveBranch(UTFNode* InRoot);
 
 	// Get all tf nodes as array
-	TArray<UTFNode*> GetNodesAsArray() const;
+	void AddNodesToArray(TArray<UTFNode*>& OutNodes) const;
 
 	// String output of the tf tree
 	FString ToString() const;

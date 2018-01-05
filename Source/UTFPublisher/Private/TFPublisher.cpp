@@ -4,8 +4,6 @@
 #include "TFPublisher.h"
 #include "TagStatics.h"
 #include "CoordConvStatics.h"
-//#include "FTFTree.h"
-#include "tf2_msgs/TFMessage.h"
 
 // Sets default values
 ATFPublisher::ATFPublisher()
@@ -35,35 +33,35 @@ void ATFPublisher::BeginPlay()
 	// Build the tf tree
 	BuildTFTree();
 
-	//// Create the ROSBridge handler for connecting with ROS
-	//ROSBridgeHandler = MakeShareable<FROSBridgeHandler>(
-	//	new FROSBridgeHandler(ServerIP, ServerPORT));
-	//
-	//// Create the publisher
-	//TFPublisher = MakeShareable<FROSBridgePublisher>(
-	//	new FROSBridgePublisher("tf2_msgs/TFMessage", "/tf"));
+	// Create the ROSBridge handler for connecting with ROS
+	ROSBridgeHandler = MakeShareable<FROSBridgeHandler>(
+		new FROSBridgeHandler(ServerIP, ServerPORT));
+	
+	// Create the publisher
+	TFPublisher = MakeShareable<FROSBridgePublisher>(
+		new FROSBridgePublisher("tf2_msgs/TFMessage", "/tf"));
 
-	//// Add publisher
-	//ROSBridgeHandler->AddPublisher(TFPublisher);
+	// Add publisher
+	ROSBridgeHandler->AddPublisher(TFPublisher);
 
-	//// Connect to ROS
-	//ROSBridgeHandler->Connect();
+	// Connect to ROS
+	ROSBridgeHandler->Connect();
 
-	//// Bind publish function to timer
-	//if (bUseStaticPublishRate)
-	//{
-	//	if (StaticPublishRate > 0.f)
-	//	{
-	//		// Disable tick
-	//		SetActorTickEnabled(false);
-	//		// Setup timer
-	//		GetWorldTimerManager().SetTimer(TFPubTimer, this, &ATFPublisher::PublishTF, StaticPublishRate, true);
-	//	}
-	//}
-	//else
-	//{
-	//	// Take into account the PublishRate Tag key value pair (if missing, publish on tick)
-	//}
+	// Bind publish function to timer
+	if (bUseStaticPublishRate)
+	{
+		if (StaticPublishRate > 0.f)
+		{
+			// Disable tick
+			SetActorTickEnabled(false);
+			// Setup timer
+			GetWorldTimerManager().SetTimer(TFPubTimer, this, &ATFPublisher::PublishTF, StaticPublishRate, true);
+		}
+	}
+	else
+	{
+		// Take into account the PublishRate Tag key value pair (if missing, publish on tick)
+	}
 }
 
 // Called when destroyed or game stopped
@@ -86,16 +84,6 @@ void ATFPublisher::BuildTFTree()
 {
 	// Get all objects with TF tags
 	auto ObjToTagData = FTagStatics::GetObjectsToKeyValuePairs(GetWorld(), TEXT("TF"));
-
-	//for (auto MapItr(ObjToTagData.CreateIterator()); MapItr; ++MapItr)
-	//{
-	//	UE_LOG(LogTF, Warning, TEXT(" \t %s's tags:"), *MapItr->Key->GetName());
-	//	for (const auto& KeyValItr : MapItr->Value)
-	//	{
-	//		UE_LOG(LogTF, Warning, TEXT(" \t \t %s - %s:"), *KeyValItr.Key, *KeyValItr.Value);
-	//	}
-	//	UE_LOG(LogTF, Warning, TEXT(" ---- \n"), *MapItr->Key->GetName());
-	//}
 
 	// Try adding objects to the tf tree until no more objects in the map
 	// and the map size has changed
@@ -138,9 +126,9 @@ void ATFPublisher::BuildTFTree()
 	}
 
 	UE_LOG(LogTF, Warning, TEXT(" Current TF trees: \n %s \n "), *TFWWorldTree->ToString());
-
-	UE_LOG(LogTF, Error, TEXT("%i items have no parents, adding them as separate root tf trees: "),
+	UE_LOG(LogTF, Error, TEXT("%i could not be added, will be added as separate nodes with world parents: "),
 		ObjToTagData.Num());
+	
 	for (auto MapItr(ObjToTagData.CreateIterator()); MapItr; ++MapItr)
 	{
 		UE_LOG(LogTF, Warning, TEXT(" \t %s's tags:"), *MapItr->Key->GetName());
@@ -163,73 +151,60 @@ void ATFPublisher::BuildTFTree()
 
 		if (TFWWorldTree->AddNode(MapItr->Key, ChildFrameId, ParentFrameId))
 		{
-			UE_LOG(LogTF, Warning, TEXT(" \t %s - Successfully added to parent: %s \n\n"),
-				*ChildFrameId, *ParentFrameId);
 			MapItr.RemoveCurrent();
 		}
 	}
-
-	UE_LOG(LogTF, Error, TEXT("%i items could not pe added to the tf trees"),
-		ObjToTagData.Num());
-
-	TFNodes = TFWWorldTree->GetNodesAsArray();
+	TFWWorldTree->GetNodesAsArray(TFNodes);
 }
 
 // Publish tf tree
 void ATFPublisher::PublishTF()
 {
-	UE_LOG(LogTF, Warning, TEXT(" \t\tSTART TREES --> "));
-	UE_LOG(LogTF, Warning, TEXT(" %s \n "), *TFWWorldTree->ToString());
-	UE_LOG(LogTF, Warning, TEXT(" \t\t AS ARRAY : "));
+	// Current time as ROS time
+	FROSTime TimeNow = FROSTime::Now();
+		
+	// Create TFMessage
+	TSharedPtr<tf2_msgs::TFMessage> TFMsgPtr =
+		MakeShareable(new tf2_msgs::TFMessage());
+
+	// Iterate TF nodes, generate and add StampedTransform msgs to TFMessage
 	for (const auto& NodeItr : TFNodes)
 	{
-		UE_LOG(LogTF, Warning, TEXT(" %s \n \t "), *NodeItr->ToString());
+		TFMsgPtr->AddTransform(TFNodeToMsg(NodeItr, TimeNow));
+		//UE_LOG(LogTF, Warning, TEXT(" %s \n "), *TFNodeToMsg(NodeItr, TimeNow).ToString());
 	}
-	UE_LOG(LogTF, Warning, TEXT(" \t\t <-- END TREES *** "));
+	UE_LOG(LogTF, Warning, TEXT(" %s \n "), *TFMsgPtr->ToString());
+	
+	// PUB
+	ROSBridgeHandler->PublishMsg("/tf", TFMsgPtr);
 
-	//// Current time as ROS time
-	//FROSTime TimeNow = FROSTime::Now();
+	ROSBridgeHandler->Render();
 
-	//TSharedPtr<tf2_msgs::TFMessage> NsTFMsgPtr =
-	//	MakeShareable(new tf2_msgs::TFMessage());
-
-	//for (uint32 i = 0; i < NrOfTFMsgTEST; i++)
-	//{
-	//	geometry_msgs::TransformStamped StampedTransformMsg;
-
-	//	std_msgs::Header Header;
-	//	Header.SetSeq(Seq);
-	//	Header.SetFrameId(TEXT("World"));
-	//	Header.SetStamp(TimeNow);
-
-	//	geometry_msgs::Transform TransfMsg(
-	//		geometry_msgs::Vector3(
-	//			FMath::RandRange(-0.1f, 0.1f) + (0.2*i),
-	//			FMath::RandRange(-0.2f, 0.2f) + (0.2*i),
-	//			FMath::RandRange(-0.1f, 0.1f) + (0.2*i)),
-	//		geometry_msgs::Quaternion(FRotator(
-	//			FMath::RandRange(-10.f, 10.f) + (0.2*i),
-	//			FMath::RandRange(-10.f, 10.f) + (0.2*i),
-	//			FMath::RandRange(-10.f, 10.f) + (0.2*i)).Quaternion()));
-
-	//	StampedTransformMsg.SetHeader(Header);
-	//	StampedTransformMsg.SetChildFrameId(FString("child_").Append(FString::FromInt(i)));
-	//	StampedTransformMsg.SetTransform(TransfMsg);
-
-	//	NsTFMsgPtr->AddTransform(StampedTransformMsg);
-	//}
-
-	//// PUB
-	//ROSBridgeHandler->PublishMsg("/tf", NsTFMsgPtr);
-
-
-	//ROSBridgeHandler->Render();
-
-	//// Update message sequence
-	//Seq++;
+	// Update message sequence
+	Seq++;
 }
 
-void ATFPublisher::OnActorDestroyed(AActor* DestroyedActor)
+// TFNode to tf2_msgs::TFMessage
+geometry_msgs::TransformStamped ATFPublisher::TFNodeToMsg(UTFNode* InNode, const FROSTime InTime)
 {
-	UE_LOG(LogTF, Warning, TEXT(" Actor destroyed !!! "));
+		geometry_msgs::TransformStamped StampedTransformMsg;
+
+		std_msgs::Header Header;
+		Header.SetSeq(Seq);
+		const FString ParentFrameId = InNode->GetParent() != nullptr ?
+			InNode->GetParent()->GetFrameId() : TEXT("World");
+		Header.SetFrameId(ParentFrameId);
+		Header.SetStamp(InTime);
+
+		FTransform ROSTransf = FCoordConvStatics::UToROS(InNode->GetRelativeTransform());
+
+		geometry_msgs::Transform TransfMsg(
+			geometry_msgs::Vector3(ROSTransf.GetLocation()),
+			geometry_msgs::Quaternion(ROSTransf.GetRotation()));
+
+		StampedTransformMsg.SetHeader(Header);
+		StampedTransformMsg.SetChildFrameId(InNode->GetFrameId());
+		StampedTransformMsg.SetTransform(TransfMsg);
+
+	return StampedTransformMsg;
 }

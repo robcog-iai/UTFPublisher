@@ -43,6 +43,12 @@ public:
 	// Get relative transform
 	FTransform GetWorldTransform() const;
 
+	// Get frame id
+	FString GetFrameId() const { return ChildFrameId; }
+
+	// Get parent
+	UTFNode* GetParent() const { return Parent; }
+
 	// String output of the tf node data
 	FString ToString() const;
 

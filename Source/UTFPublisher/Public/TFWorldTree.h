@@ -34,8 +34,8 @@ public:
 	// Add node to the world tf tree (by default root parent frame)
 	bool AddNode(UTFNode* InNode, const FString& InParentFrameId = TEXT("World"));
 
-	// Get all tf nodes as array
-	TArray<UTFNode*> GetNodesAsArray() const;
+	// Get all tf nodes as array (array will be emptied first)
+	void GetNodesAsArray(TArray<UTFNode*>& OutNodes) const;
 
 	// String output of the tf trees
 	FString ToString() const;

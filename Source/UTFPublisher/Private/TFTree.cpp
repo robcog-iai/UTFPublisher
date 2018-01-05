@@ -6,15 +6,11 @@
 // Default constructor
 UTFTree::UTFTree() : Root(nullptr)
 {
-	UE_LOG(LogTF, Warning, TEXT("[%s] Constructor of %s"),
-		*FString(__FUNCTION__), *GetName());
 }
 
 // Destructor
 UTFTree::~UTFTree()
 {
-	UE_LOG(LogTF, Warning, TEXT("[%s] Desctructor of %s"),
-		*FString(__FUNCTION__), *GetName());
 }
 
 // Find Node
@@ -97,9 +93,8 @@ bool UTFTree::RemoveBranch(UTFNode* InNode)
 }
 
 // Get all tf nodes as array
-TArray<UTFNode*> UTFTree::GetNodesAsArray() const
+void UTFTree::AddNodesToArray(TArray<UTFNode*>& OutNodes) const
 {
-	TArray<UTFNode*> NodesArray;
 	if (Root != nullptr)
 	{
 		TArray<UTFNode*> Stack;
@@ -108,14 +103,13 @@ TArray<UTFNode*> UTFTree::GetNodesAsArray() const
 		while (Stack.Num() > 0)
 		{
 			UTFNode* CurrNode = Stack.Pop();
-			NodesArray.Emplace(CurrNode);
+			OutNodes.Emplace(CurrNode);
 			for (const auto& ChildItr : CurrNode->Children)
 			{
 				Stack.Push(ChildItr);
 			}
 		}
 	}
-	return NodesArray;
 }
 
 // String output of the tf tree

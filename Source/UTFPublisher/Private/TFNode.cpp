@@ -6,15 +6,11 @@
 // Default constructor
 UTFNode::UTFNode() : Parent(nullptr), ActorBaseObject(nullptr), SceneComponentBaseObject(nullptr)
 {
-	UE_LOG(LogTF, Warning, TEXT("[%s] Constructor of %s"),
-		*FString(__FUNCTION__), *GetName());
 }
 
 // Destructor
 UTFNode::~UTFNode()
 {
-	UE_LOG(LogTF, Warning, TEXT("[%s] Desctructor of %s"),
-		*FString(__FUNCTION__), *GetName());
 }
 
 // Init data with UObject

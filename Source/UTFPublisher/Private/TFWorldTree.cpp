@@ -6,15 +6,11 @@
 // Default constructor
 UTFWorldTree::UTFWorldTree()
 {
-	UE_LOG(LogTF, Warning, TEXT("[%s] Constructor of %s"),
-		*FString(__FUNCTION__), *GetName());
 }
 
 // Destructor
 UTFWorldTree::~UTFWorldTree()
 {
-	UE_LOG(LogTF, Warning, TEXT("[%s] Desctructor of %s"),
-		*FString(__FUNCTION__), *GetName());
 }
 
 // Create and add node to the world tf tree
@@ -54,16 +50,14 @@ bool UTFWorldTree::AddNode(UTFNode* InNode, const FString& InParentFrameId)
 }
 
 // Get all tf nodes as array
-TArray<UTFNode*> UTFWorldTree::GetNodesAsArray() const
+void UTFWorldTree::GetNodesAsArray(TArray<UTFNode*>& OutNodes) const
 {
-	TArray<UTFNode*> NodesArray;
-
+	OutNodes.Empty();
 	// Collect nodes from every tree
 	for (auto& TreeItr : TFTrees)
 	{
-		NodesArray.Append(TreeItr->GetNodesAsArray());
+		TreeItr->AddNodesToArray(OutNodes);
 	}
-	return NodesArray;
 }
 
 // String output of the tf trees
