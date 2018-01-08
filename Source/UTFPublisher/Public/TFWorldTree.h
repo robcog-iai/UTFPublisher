@@ -28,18 +28,41 @@ public:
 	// Default destructor
 	virtual ~UTFWorldTree();
 
+	// Set root frame name
+	void SetRootFrameName(const FString& InRootFrameName);
+
 	// Create and add node to the world tf tree
-	bool AddNode(UObject* InObject, const FString& InFrameId, const FString& InParentFrameId = TEXT("World"), UObject* InOuter = (UObject*)nullptr);
-
-	// Add node to the world tf tree (by default root parent frame)
-	bool AddNode(UTFNode* InNode, const FString& InParentFrameId = TEXT("World"));
-
+	bool AddNode(UObject* InObject, const FString& InFrameId, const FString& InParentFrameId = TEXT("World"));
+	
 	// Get all tf nodes as array (array will be emptied first)
 	void GetNodesAsArray(TArray<UTFNode*>& OutNodes) const;
 
 	// String output of the tf trees
 	FString ToString() const;
+
 private:
+	// Create and add new tree
+	void AddTree(UTFNode* InRoot);
+
+	// Find and remove node from tree
+	void RemoveNode(UTFNode* InNode);
+
+	// Remove root node (generate new trees from the children)
+	void RemoveRootNode(UTFTree* InTFTree);
+
 	// Array of UTFTrees (since world is not a node)
+	UPROPERTY() // avoid GC
 	TArray<UTFTree*> TFTrees;
+
+public:
+	// Root frame name
+	FString RootFrameName;
+
+	// Array of all TF Nodes (convenient iteration)
+	UPROPERTY() // avoid GC
+	TArray<UTFNode*> TFNodesAsArray;
+
+	// Give access to private data
+	friend class UTFTree;
+	friend class UTFNode;
 };

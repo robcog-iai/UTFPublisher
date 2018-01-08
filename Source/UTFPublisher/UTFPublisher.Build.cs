@@ -44,8 +44,6 @@ public class UTFPublisher : ModuleRules
                 "UTags",
                 "UCoordConv",
                 "UROSBridge",
-                "Json",
-                "JsonUtilities"
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);

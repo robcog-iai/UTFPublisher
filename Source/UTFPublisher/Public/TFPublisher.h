@@ -39,19 +39,17 @@ public:
 	UPROPERTY(EditAnywhere, Category = TF, meta = (ClampMin = 0, ClampMax = 65535))
 	int32 ServerPORT;
 
-	// Choose between dynamic (various publish rates for the frames) 
-	// or static publish rates (all frames updated at the same time)
+	// TF root frame name (map, world etc.)
+	FString TFRootFrameName;
+
+	// Choose between variable (various publish rates for the frames) 
+	// or constant publish rates (all frames updated at the same time)
 	UPROPERTY(EditAnywhere, Category = TF)
-	bool bUseStaticPublishRate;
+	bool bUseConstantPublishRate;
 
 	// Delta time (s) between publishing (0 = on Tick)
-	UPROPERTY(EditAnywhere, Category = TF, meta = (editcondition = "bUseStaticPublishRate", ClampMin = "0.0"))
-	float StaticPublishRate;
-	
-	// TODO RM TEST
-	// Delta time between timer publishing (s)
-	UPROPERTY(EditAnywhere, Category = TF)
-	uint32 NrOfTFMsgTEST;
+	UPROPERTY(EditAnywhere, Category = TF, meta = (editcondition = "bUseConstantPublishRate", ClampMin = "0.0"))
+	float ConstantPublishRate;
 	
 private:
 	// Build the tf tree
@@ -73,6 +71,7 @@ private:
 	FTimerHandle TFPubTimer;
 
 	// TF World Tree (representing all tf trees connected to World)
+	UPROPERTY() // avoid GC
 	UTFWorldTree* TFWWorldTree;
 
 	// Array of all the TFNodes for quick iteration to create TF messages

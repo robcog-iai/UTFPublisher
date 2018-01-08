@@ -11,11 +11,14 @@ ATFPublisher::ATFPublisher()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	// set default TF root frame
+	TFRootFrameName = TEXT("world");
+
 	// Update on tick by default
-	bUseStaticPublishRate = false;
+	bUseConstantPublishRate = false;
 
 	// Default timer delta time (s) (0 = on Tick)
-	StaticPublishRate = 0.0f;
+	ConstantPublishRate = 0.0f;
 
 	// ROSBridge server default values
 	ServerIP = "127.0.0.1";
@@ -29,6 +32,7 @@ void ATFPublisher::BeginPlay()
 
 	// Create the tf world tree object
 	TFWWorldTree = NewObject<UTFWorldTree>(this, TEXT("TFWorldTree"));
+	TFWWorldTree->SetRootFrameName(TFRootFrameName);
 
 	// Build the tf tree
 	BuildTFTree();
@@ -37,9 +41,9 @@ void ATFPublisher::BeginPlay()
 	ROSBridgeHandler = MakeShareable<FROSBridgeHandler>(
 		new FROSBridgeHandler(ServerIP, ServerPORT));
 	
-	// Create the publisher
+	// Create the tf publisher
 	TFPublisher = MakeShareable<FROSBridgePublisher>(
-		new FROSBridgePublisher("tf2_msgs/TFMessage", "/tf"));
+		new FROSBridgePublisher("tf2_msgs/TFMessage", "/tf_static"));
 
 	// Add publisher
 	ROSBridgeHandler->AddPublisher(TFPublisher);
@@ -48,14 +52,14 @@ void ATFPublisher::BeginPlay()
 	ROSBridgeHandler->Connect();
 
 	// Bind publish function to timer
-	if (bUseStaticPublishRate)
+	if (bUseConstantPublishRate)
 	{
-		if (StaticPublishRate > 0.f)
+		if (ConstantPublishRate > 0.f)
 		{
 			// Disable tick
 			SetActorTickEnabled(false);
 			// Setup timer
-			GetWorldTimerManager().SetTimer(TFPubTimer, this, &ATFPublisher::PublishTF, StaticPublishRate, true);
+			GetWorldTimerManager().SetTimer(TFPubTimer, this, &ATFPublisher::PublishTF, ConstantPublishRate, true);
 		}
 	}
 	else
@@ -67,7 +71,7 @@ void ATFPublisher::BeginPlay()
 // Called when destroyed or game stopped
 void ATFPublisher::EndPlay(const EEndPlayReason::Type Reason)
 {
-	//ROSBridgeHandler->Disconnect();
+	ROSBridgeHandler->Disconnect();
 
 	Super::EndPlay(Reason);
 }
@@ -96,7 +100,7 @@ void ATFPublisher::BuildTFTree()
 		{
 			// Frame Ids default values
 			FString ChildFrameId = MapItr->Key->GetName();
-			FString ParentFrameId = TEXT("World");
+			FString ParentFrameId = TFRootFrameName;
 
 			// Set child frame id from tag
 			if (MapItr->Value.Contains(TEXT("ChildFrameId")))
@@ -141,7 +145,7 @@ void ATFPublisher::BuildTFTree()
 		// Frame Ids default values
 		FString ChildFrameId = MapItr->Key->GetName();
 		// Parent will be forced as World
-		const FString ParentFrameId = TEXT("World");
+		const FString ParentFrameId = TFRootFrameName;
 
 		// Set child frame id from tag
 		if (MapItr->Value.Contains(TEXT("ChildFrameId")))
@@ -160,6 +164,9 @@ void ATFPublisher::BuildTFTree()
 // Publish tf tree
 void ATFPublisher::PublishTF()
 {
+	TArray<UTFNode*> Arr;
+	TFWWorldTree->GetNodesAsArray(Arr);
+
 	// Current time as ROS time
 	FROSTime TimeNow = FROSTime::Now();
 		
@@ -168,12 +175,12 @@ void ATFPublisher::PublishTF()
 		MakeShareable(new tf2_msgs::TFMessage());
 
 	// Iterate TF nodes, generate and add StampedTransform msgs to TFMessage
-	for (const auto& NodeItr : TFNodes)
+	for (const auto& NodeItr : TFWWorldTree->TFNodesAsArray)
 	{
 		TFMsgPtr->AddTransform(TFNodeToMsg(NodeItr, TimeNow));
 		//UE_LOG(LogTF, Warning, TEXT(" %s \n "), *TFNodeToMsg(NodeItr, TimeNow).ToString());
 	}
-	UE_LOG(LogTF, Warning, TEXT(" %s \n "), *TFMsgPtr->ToString());
+	UE_LOG(LogTF, Warning, TEXT(" ARR SIZE=%i %s \n "),Arr.Num(), *TFMsgPtr->ToString());
 	
 	// PUB
 	ROSBridgeHandler->PublishMsg("/tf", TFMsgPtr);
@@ -192,7 +199,7 @@ geometry_msgs::TransformStamped ATFPublisher::TFNodeToMsg(UTFNode* InNode, const
 		std_msgs::Header Header;
 		Header.SetSeq(Seq);
 		const FString ParentFrameId = InNode->GetParent() != nullptr ?
-			InNode->GetParent()->GetFrameId() : TEXT("World");
+			InNode->GetParent()->GetFrameId() : TFRootFrameName;
 		Header.SetFrameId(ParentFrameId);
 		Header.SetStamp(InTime);
 

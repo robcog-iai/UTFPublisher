@@ -29,6 +29,9 @@ public:
 	// Find Node
 	UTFNode* FindNode(const FString& InFrameId);
 
+	// Check if tree has node
+	bool HasNode(UTFNode* InNode);
+
 	// Add root
 	bool AddRoot(UTFNode* InNode);
 
@@ -36,10 +39,7 @@ public:
 	bool AddNodeAt(UTFNode* InNode, const FString& InFrameId);
 
 	// Remove only the node, connect its children to its parent
-	bool RemoveNode(UTFNode* InNode);
-
-	// Remove node with its branch
-	bool RemoveBranch(UTFNode* InRoot);
+	void RemoveNode(UTFNode* InNode);
 
 	// Get all tf nodes as array
 	void AddNodesToArray(TArray<UTFNode*>& OutNodes) const;
@@ -49,5 +49,9 @@ public:
 
 private:
 	// Root node
+	UPROPERTY() // avoid GC
 	UTFNode* Root;
+
+	// Give access to private data
+	friend class UTFWorldTree;
 };

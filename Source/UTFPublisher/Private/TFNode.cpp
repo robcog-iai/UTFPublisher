@@ -2,6 +2,7 @@
 // Author: Andrei Haidu (http://haidu.eu)
 
 #include "TFNode.h"
+#include "TFWorldTree.h"
 
 // Default constructor
 UTFNode::UTFNode() : Parent(nullptr), ActorBaseObject(nullptr), SceneComponentBaseObject(nullptr)
@@ -11,6 +12,7 @@ UTFNode::UTFNode() : Parent(nullptr), ActorBaseObject(nullptr), SceneComponentBa
 // Destructor
 UTFNode::~UTFNode()
 {
+	UE_LOG(LogTF, Error, TEXT("[%s]"), *FString(__FUNCTION__));
 }
 
 // Init data with UObject
@@ -66,9 +68,21 @@ FTransform UTFNode::GetWorldTransform() const
 	return (this->*GetWorldTransformFunctionPtr)();
 }
 
+// Add child
+void UTFNode::AddChild(UTFNode* InChildNode)
+{
+	Children.Emplace(InChildNode);
+	InChildNode->Parent = this;
+}
+
 // Get the world transform of actor
 FORCEINLINE FTransform UTFNode::GetRelativeTransform_FromActor() const
 {
+	if (!ActorBaseObject->IsValidLowLevel())
+	{
+		return FTransform();
+	}
+
 	if (Parent != nullptr)
 	{
 		// Get the relative transform to the parent
@@ -85,6 +99,11 @@ FORCEINLINE FTransform UTFNode::GetRelativeTransform_FromActor() const
 // Get the world transform of scene component
 FORCEINLINE FTransform UTFNode::GetRelativeTransform_FromSceneComponent() const
 {
+	if (!SceneComponentBaseObject->IsValidLowLevel())
+	{
+		return FTransform();
+	}
+
 	if (Parent != nullptr)
 	{
 		// Get the relative transform to the parent
@@ -101,27 +120,35 @@ FORCEINLINE FTransform UTFNode::GetRelativeTransform_FromSceneComponent() const
 // Get the world transform of actor
 FORCEINLINE FTransform UTFNode::GetWorldTransform_FromActor() const
 {
+	if (!ActorBaseObject->IsValidLowLevel())
+	{
+		return FTransform();
+	}
 	return ActorBaseObject->GetTransform();
 }
 
 // Get the world transform of scene component
 FORCEINLINE FTransform UTFNode::GetWorldTransform_FromSceneComponent() const
 {
+	if (!SceneComponentBaseObject->IsValidLowLevel())
+	{
+		return FTransform();
+	}
 	return SceneComponentBaseObject->GetComponentTransform();
 }
 
 // Called when the representing entity gets destroyed
 void UTFNode::OnEntityDestroyed(AActor* DestroyedActor)
 {
-	UE_LOG(LogTF, Warning, TEXT(" Actor %s destroyed !!! "),
-		*DestroyedActor->GetName());
-	Parent = nullptr;
+	if (auto TFWorldTree = Cast<UTFWorldTree>(GetOuter()))
+	{
+		UE_LOG(LogTF, Error, TEXT("[%s] Actor %s destroyed, removing node %s from %s"),
+			*FString(__FUNCTION__), *DestroyedActor->GetName(), *ToString(), *GetOuter()->GetName());
+		TFWorldTree->RemoveNode(this);
+	}
 	//Children.Empty();
-	ActorBaseObject = nullptr;
-	SceneComponentBaseObject = nullptr;
-	
-	// Destroy TF Node as well
-	//BeginDestroy();
+	//Parent = nullptr;
+	ConditionalBeginDestroy();
 }
 
 // Output the tf node data as string
@@ -148,13 +175,17 @@ FString UTFNode::ToString() const
 		{
 			ParentBaseObjName = Parent->SceneComponentBaseObject->GetName();
 		}
-		return FString::Printf(TEXT("\t[%s(%s)] -> [%s(%s)]; T=%s \n"),
-			*Parent->ChildFrameId, *ParentBaseObjName, *ChildFrameId, *BaseObjName,
-			*GetRelativeTransform().ToString());
+		//return FString::Printf(TEXT("\t[%s(%s)] -> [%s(%s)]; T=%s \n"),
+		//	*Parent->ChildFrameId, *ParentBaseObjName, *ChildFrameId, *BaseObjName,
+		//	*GetRelativeTransform().ToString());
+		return FString::Printf(TEXT("\t[%s(%s)] -> [%s(%s)]; \n"),
+			*Parent->ChildFrameId, *ParentBaseObjName, *ChildFrameId, *BaseObjName);
 	}
 	else
 	{
-		return FString::Printf(TEXT("\t[None(none)] -> [%s(%s)]; T=%s \n"),
-			*ChildFrameId, *BaseObjName, *GetRelativeTransform().ToString());
+		//return FString::Printf(TEXT("\t[None(none)] -> [%s(%s)]; T=%s \n"),
+		//	*ChildFrameId, *BaseObjName, *GetRelativeTransform().ToString());
+		return FString::Printf(TEXT("\t[None(none)] -> [%s(%s)];\n"),
+			*ChildFrameId, *BaseObjName);
 	}
 }

@@ -52,11 +52,14 @@ public:
 	// String output of the tf node data
 	FString ToString() const;
 
+private:
+	// Add child
+	void AddChild(UTFNode* InChildNode);
+
 	// Called when the actor base object or the components parent gets destroyed
 	UFUNCTION()
 	void OnEntityDestroyed(AActor* DestroyedActor);
 
-private:
 	// Get the relative transform of actor
 	FORCEINLINE FTransform GetRelativeTransform_FromActor() const;
 
@@ -80,9 +83,11 @@ private:
 	GetWorldTransformFuncPtrType GetWorldTransformFunctionPtr;
 	
 	// Parent
+	UPROPERTY() // avoid GC
 	UTFNode* Parent;
 
 	// Array of children nodes
+	UPROPERTY() // avoid GC
 	TArray<UTFNode*> Children;
 
 	// Name of the (child) frame id
@@ -92,6 +97,7 @@ private:
 	AActor* ActorBaseObject;
 	USceneComponent* SceneComponentBaseObject;
 
-	// Give TFTree access to private data 
+	// Give access to private data 
 	friend class UTFTree;
+	friend class UTFWorldTree;
 };
