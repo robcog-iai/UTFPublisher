@@ -52,14 +52,11 @@ public:
 	float ConstantPublishRate;
 	
 private:
-	// Build the tf tree
-	void BuildTFTree();
-
 	// Publish tf tree
 	void PublishTF();
 
-	// TFNode to TransformStamped msg
-	geometry_msgs::TransformStamped TFNodeToMsg(UTFNode* InNode, const FROSTime InTime);
+	//// TFNode to TransformStamped msg
+	//geometry_msgs::TransformStamped TFNodeToMsg(UTFNode* InNode, const FROSTime InTime);
 
 	// ROSBridge handler for ROS connection
 	TSharedPtr<FROSBridgeHandler> ROSBridgeHandler;
@@ -71,11 +68,7 @@ private:
 	FTimerHandle TFPubTimer;
 
 	// TF World Tree (representing all tf trees connected to World)
-	UPROPERTY() // avoid GC
-	UTFWorldTree* TFWWorldTree;
-
-	// Array of all the TFNodes for quick iteration to create TF messages
-	TArray<UTFNode*> TFNodes;
+	FTFWorldTree TFWorldTree;
 
 	// TF header sequence
 	uint32 Seq;

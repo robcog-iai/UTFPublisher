@@ -1,57 +1,73 @@
-// Copyright 2017, Institute for Artificial Intelligence - University of Bremen
+// Copyright 2018, Institute for Artificial Intelligence - University of Bremen
 // Author: Andrei Haidu (http://haidu.eu)
 
 #pragma once
 
 #include "UTFPublisher.h" // CoreMinimal, TFLog
-#include "UObject/NoExportTypes.h"
-#include "TFNode.h"
+#include "TFNodeComp.h"
 #include "TFTree.generated.h"
 
 /**
- * UTFNode - TF tree, containing:
- *
- *  - pointer to the root node
- *  - size of the tree
- */
-UCLASS()
-class UTFPUBLISHER_API UTFTree : public UObject
+* FTFTree - TF Tree, containing:
+*
+*  - pointer to the root node
+*/
+USTRUCT(BlueprintType)
+struct UTFPUBLISHER_API FTFTree
 {
 	GENERATED_BODY()
 
-public:
 	// Default constructor
-	UTFTree();
+	FTFTree() { }
 
-	// Default destructor
-	virtual ~UTFTree();
+    // Constructor with root node
+	FTFTree(UObject* InObject, const FString& InFrameId) : Root(nullptr)
+	{
+		UTFNodeComp* NewTFNode = NewObject<UTFNodeComp>(InObject);
+		NewTFNode->RegisterComponent();
+		NewTFNode->Init(InObject, InFrameId);
+		AddRoot(NewTFNode);
+	}
 
-	// Find Node
-	UTFNode* FindNode(const FString& InFrameId);
+	// Constructor with root node
+	FTFTree(UTFNodeComp* InNode) : Root(nullptr)
+	{
+		AddRoot(InNode);
+	}
 
-	// Check if tree has node
-	bool HasNode(UTFNode* InNode);
+	// Add tree root
+	void AddRoot(UTFNodeComp* InNode)
+	{
+		if (Root != nullptr)
+		{
+			// Remove all currently existing nodes
+			// TODO
+		}
+		Root = InNode;
 
-	// Add root
-	bool AddRoot(UTFNode* InNode);
+	}
 
-	// Add Node at the given frame
-	bool AddNodeAt(UTFNode* InNode, const FString& InFrameId);
+	// Add node to parent
+	void AddNode(UObject* InObject, const FString& InFrameId, UTFNodeComp* ParentNode)
+	{
+		UTFNodeComp* NewTFNode = NewObject<UTFNodeComp>(InObject);
+		NewTFNode->RegisterComponent();
+		NewTFNode->Init(InObject, InFrameId);
+		AddNode(NewTFNode, ParentNode);
+	}
 
-	// Remove only the node, connect its children to its parent
-	void RemoveNode(UTFNode* InNode);
-
-	// Get all tf nodes as array
-	void AddNodesToArray(TArray<UTFNode*>& OutNodes) const;
-
-	// String output of the tf tree
-	FString ToString() const;
+	// Add node to parent
+	void AddNode(UTFNodeComp* InNode, UTFNodeComp* ParentNode)
+	{
+		ParentNode->AddChild(InNode);
+	}
 
 private:
 	// Root node
-	UPROPERTY() // avoid GC
-	UTFNode* Root;
+	UTFNodeComp* Root;
 
-	// Give access to private data
-	friend class UTFWorldTree;
+	
+
+	// Give access to private data 
+	friend struct FTFWorldTree;
 };
