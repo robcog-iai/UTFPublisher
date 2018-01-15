@@ -62,11 +62,49 @@ struct UTFPUBLISHER_API FTFTree
 		ParentNode->AddChild(InNode);
 	}
 
+	// Find Node
+	bool FindNode(const FString& InFrameId, UTFNodeComp*& OutNode)
+	{
+		if (Root == nullptr)
+		{
+			return false; // Tree is empty
+		}
+
+		if (Root->FrameId.Equals(InFrameId))
+		{
+			OutNode = Root;
+			return true;
+		}
+		else
+		{
+			TArray<UTFNodeComp*> Stack;
+			Stack.Push(Root);
+
+			while (Stack.Num() > 0)
+			{
+				UTFNodeComp* CurrNode = Stack.Pop();
+				if (CurrNode->FrameId.Equals(InFrameId))
+				{
+					OutNode = CurrNode;
+					return true;
+				}
+				for (const auto& ChildItr : CurrNode->Children)
+				{
+					Stack.Push(ChildItr);
+				}
+			}
+			return false; // Node not found
+		}
+	}
+
+	FORCEINLINE bool operator==(const FTFTree& Other) const
+	{
+		return Root == Other.Root;
+	}
+
 private:
 	// Root node
-	UTFNodeComp* Root;
-
-	
+	UTFNodeComp* Root;	
 
 	// Give access to private data 
 	friend struct FTFWorldTree;

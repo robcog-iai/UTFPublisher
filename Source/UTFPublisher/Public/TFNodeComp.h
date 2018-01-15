@@ -7,6 +7,9 @@
 #include "Components/ActorComponent.h"
 #include "TFNodeComp.generated.h"
 
+// Forward declaration of the owner tf world tree in order to avoid circular dependency
+struct FTFWorldTree;
+struct FTFTree;
 
 /**
 * UTFNodeComp - TF Node, inherits from UActorComponent to have life duration synced
@@ -15,7 +18,7 @@
 *  - array of children nodes
 *  - node data:
 *    - frame name
-*    - pointer to an entity (AActor or USceneComponent) with access to FTransform
+*    - pointer to parent entity (AActor or USceneComponent) with access to FTransform
 */
 UCLASS(ClassGroup = (TF), meta = (BlueprintSpawnableComponent))
 class UTFPUBLISHER_API UTFNodeComp : public UActorComponent
@@ -41,19 +44,19 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 	// Init class with UObject
-	void Init(UObject* InObject, const FString& InFrameId);
+	void Init(UObject* InObject, const FString& InFrameId, FTFWorldTree* InOwnerWorldTree = nullptr);
 
 	// Init class with AActor
-	void Init(AActor* InActor, const FString& InFrameId);
+	void Init(AActor* InActor, const FString& InFrameId, FTFWorldTree* InOwnerWorldTree = nullptr);
 
 	// Init class with USceneComponent
-	void Init(USceneComponent* InSceneComponent, const FString& InFrameId);
+	void Init(USceneComponent* InSceneComponent, const FString& InFrameId, FTFWorldTree* InOwnerWorldTree = nullptr);
 
 	// Get relative transform
 	FTransform GetRelativeTransform() const;
 
 	// Get relative transform
-	FTransform GetWorldTransform() const;	
+	FTransform GetWorldTransform() const;
 
 	// String output of the tf node data
 	FString ToString() const;
@@ -90,13 +93,18 @@ private:
 	// Array of children nodes
 	TArray<UTFNodeComp*> Children;
 
-	// Name of the (child) frame id
-	FString ChildFrameId;
+	// Name of the frame id (tf equivalent of child_frame_id) 
+	FString FrameId;
 
 	// Base object type to get the FTransform (of AACtor or USceneComponent)
 	AActor* ActorBaseObject;
 	USceneComponent* SceneComponentBaseObject;
 
+	// Pointer to the owner world tree (to remove itself from tree in case of destruction)
+	FTFWorldTree* OwnerWorldTree;
+	FTFTree* OwnerTree;
+
 	// Give access to private data 
 	friend struct FTFTree;
+	friend struct FTFWorldTree;
 };

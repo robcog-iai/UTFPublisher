@@ -2,13 +2,16 @@
 // Author: Andrei Haidu (http://haidu.eu)
 
 #include "TFNodeComp.h"
+#include "TFWorldTree.h"
+#include "TFTree.h"
+#include "geometry_msgs/TransformStamped.h"
 
 // Sets default values for this component's properties
 UTFNodeComp::UTFNodeComp()
 {
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
-	PrimaryComponentTick.bCanEverTick = true;
+	PrimaryComponentTick.bCanEverTick = false;
 
 	// ...
 }
@@ -32,7 +35,12 @@ void UTFNodeComp::BeginPlay()
 void UTFNodeComp::BeginDestroy()
 {
 	Super::BeginDestroy();
-
+	// Remove itself from the TF world tree
+	if (OwnerWorldTree != nullptr)
+	{
+		OwnerWorldTree->RemoveNode(this);
+		/*OwnerTree->RemoveNode(this);*/
+	}
 	UE_LOG(LogTF, Error, TEXT("[%s]"), *FString(__FUNCTION__));
 
 }
@@ -46,23 +54,29 @@ void UTFNodeComp::TickComponent(float DeltaTime, ELevelTick TickType, FActorComp
 }
 
 // Init data with UObject
-void UTFNodeComp::Init(UObject* InObject, const FString& InFrameId)
+void UTFNodeComp::Init(UObject* InObject, const FString& InFrameId, FTFWorldTree* InOwnerWorldTree)
 {
 	if (auto AA = Cast<AActor>(InObject))
 	{
-		Init(AA, InFrameId);
+		Init(AA, InFrameId, InOwnerWorldTree);
 	}
 	else if (auto USC = Cast<USceneComponent>(InObject))
 	{
-		Init(USC, InFrameId);
+		Init(USC, InFrameId, InOwnerWorldTree);
 	}
+	// TODO
+	//else
+	//{
+	//	// World node attached to the TFPublisher
+	//}
 }
 
 // Init data with AActor
-void UTFNodeComp::Init(AActor* InActor, const FString& InFrameId)
+void UTFNodeComp::Init(AActor* InActor, const FString& InFrameId, FTFWorldTree* InOwnerWorldTree)
 {
 	ActorBaseObject = InActor;
-	ChildFrameId = InFrameId;
+	FrameId = InFrameId;
+	OwnerWorldTree = InOwnerWorldTree;
 
 	// Bind the transform function ptr
 	GetRelativeTransformFunctionPtr = &UTFNodeComp::GetRelativeTransform_FromActor;
@@ -70,15 +84,42 @@ void UTFNodeComp::Init(AActor* InActor, const FString& InFrameId)
 }
 
 // Init data with USceneComponent
-void UTFNodeComp::Init(USceneComponent* InSceneComponent, const FString& InFrameId)
+void UTFNodeComp::Init(USceneComponent* InSceneComponent, const FString& InFrameId, FTFWorldTree* InOwnerWorldTree)
 {
 	SceneComponentBaseObject = InSceneComponent;
-	ChildFrameId = InFrameId;
+	FrameId = InFrameId;
 
 	// Bind the transform function ptr
 	GetRelativeTransformFunctionPtr = &UTFNodeComp::GetRelativeTransform_FromSceneComponent;
 	GetWorldTransformFunctionPtr = &UTFNodeComp::GetWorldTransform_FromSceneComponent;
 }
+
+// TODO when parent is a world node generated from TFPublisher.cpp
+//// Get geometry_msgs::TransformStamped message
+//geometry_msgs::TransformStamped GetTransformStamped(const FROSTime& InTime, const uint32 InSeq = 0)
+//{
+//	geometry_msgs::TransformStamped StampedTransformMsg;
+//
+//	std_msgs::Header Header;
+//	Header.SetSeq(InSeq);
+//	const FString ParentFrameId = Parent != nullptr ?
+//		Parent->FrameId : RootFrameName;
+//	Header.SetFrameId(ParentFrameId);
+//	Header.SetStamp(InTime);
+//
+//	// Transform to ROS coordinate system
+//	FTransform ROSTransf = FCoordConvStatics::UToROS(GetRelativeTransform());
+//
+//	geometry_msgs::Transform TransfMsg(
+//		geometry_msgs::Vector3(ROSTransf.GetLocation()),
+//		geometry_msgs::Quaternion(ROSTransf.GetRotation()));
+//
+//	StampedTransformMsg.SetHeader(Header);
+//	StampedTransformMsg.SetChildFrameId(FrameId);
+//	StampedTransformMsg.SetTransform(TransfMsg);
+//
+//	return StampedTransformMsg;
+//}
 
 // Get relative transform
 FTransform UTFNodeComp::GetRelativeTransform() const
@@ -92,7 +133,6 @@ FTransform UTFNodeComp::GetWorldTransform() const
 	return (this->*GetWorldTransformFunctionPtr)();
 }
 
-
 // Add child
 void UTFNodeComp::AddChild(UTFNodeComp* InChildNode)
 {
@@ -103,11 +143,6 @@ void UTFNodeComp::AddChild(UTFNodeComp* InChildNode)
 // Get the world transform of actor
 FORCEINLINE FTransform UTFNodeComp::GetRelativeTransform_FromActor() const
 {
-	if (!ActorBaseObject->IsValidLowLevel())
-	{
-		return FTransform();
-	}
-
 	if (Parent != nullptr)
 	{
 		// Get the relative transform to the parent
@@ -124,11 +159,6 @@ FORCEINLINE FTransform UTFNodeComp::GetRelativeTransform_FromActor() const
 // Get the world transform of scene component
 FORCEINLINE FTransform UTFNodeComp::GetRelativeTransform_FromSceneComponent() const
 {
-	if (!SceneComponentBaseObject->IsValidLowLevel())
-	{
-		return FTransform();
-	}
-
 	if (Parent != nullptr)
 	{
 		// Get the relative transform to the parent
@@ -190,13 +220,13 @@ FString UTFNodeComp::ToString() const
 		//	*Parent->ChildFrameId, *ParentBaseObjName, *ChildFrameId, *BaseObjName,
 		//	*GetRelativeTransform().ToString());
 		return FString::Printf(TEXT("\t[%s(%s)] -> [%s(%s)]; \n"),
-			*Parent->ChildFrameId, *ParentBaseObjName, *ChildFrameId, *BaseObjName);
+			*Parent->FrameId, *ParentBaseObjName, *FrameId, *BaseObjName);
 	}
 	else
 	{
 		//return FString::Printf(TEXT("\t[None(none)] -> [%s(%s)]; T=%s \n"),
 		//	*ChildFrameId, *BaseObjName, *GetRelativeTransform().ToString());
 		return FString::Printf(TEXT("\t[None(none)] -> [%s(%s)];\n"),
-			*ChildFrameId, *BaseObjName);
+			*FrameId, *BaseObjName);
 	}
 }

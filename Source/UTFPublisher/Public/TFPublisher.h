@@ -8,7 +8,6 @@
 #include "ROSBridgeHandler.h"
 #include "ROSBridgePublisher.h"
 #include "TFWorldTree.h"
-#include "tf2_msgs/TFMessage.h"
 #include "TFPublisher.generated.h"
 
 UCLASS()
@@ -54,9 +53,6 @@ public:
 private:
 	// Publish tf tree
 	void PublishTF();
-
-	//// TFNode to TransformStamped msg
-	//geometry_msgs::TransformStamped TFNodeToMsg(UTFNode* InNode, const FROSTime InTime);
 
 	// ROSBridge handler for ROS connection
 	TSharedPtr<FROSBridgeHandler> ROSBridgeHandler;
