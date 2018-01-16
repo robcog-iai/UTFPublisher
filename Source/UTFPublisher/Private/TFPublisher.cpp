@@ -33,19 +33,19 @@ void ATFPublisher::BeginPlay()
 	// Create tf world tree with the given root name
 	TFWorldTree.Build(GetWorld(), TFRootFrameName);
 
-	//// Create the ROSBridge handler for connecting with ROS
-	//ROSBridgeHandler = MakeShareable<FROSBridgeHandler>(
-	//	new FROSBridgeHandler(ServerIP, ServerPORT));
-	//
-	//// Create the tf publisher
-	//TFPublisher = MakeShareable<FROSBridgePublisher>(
-	//	new FROSBridgePublisher("tf2_msgs/TFMessage", "/tf_static"));
+	// Create the ROSBridge handler for connecting with ROS
+	ROSBridgeHandler = MakeShareable<FROSBridgeHandler>(
+		new FROSBridgeHandler(ServerIP, ServerPORT));
+	
+	// Create the tf publisher
+	TFPublisher = MakeShareable<FROSBridgePublisher>(
+		new FROSBridgePublisher("tf2_msgs/TFMessage", "/tf_static"));
 
-	//// Add publisher
-	//ROSBridgeHandler->AddPublisher(TFPublisher);
+	// Add publisher
+	ROSBridgeHandler->AddPublisher(TFPublisher);
 
-	//// Connect to ROS
-	//ROSBridgeHandler->Connect();
+	// Connect to ROS
+	ROSBridgeHandler->Connect();
 
 	// Bind publish function to timer
 	if (bUseConstantPublishRate)
@@ -67,8 +67,8 @@ void ATFPublisher::BeginPlay()
 // Called when destroyed or game stopped
 void ATFPublisher::EndPlay(const EEndPlayReason::Type Reason)
 {
-	//// Disconnect before parent ends
-	//ROSBridgeHandler->Disconnect();
+	// Disconnect before parent ends
+	ROSBridgeHandler->Disconnect();
 
 	Super::EndPlay(Reason);
 }
@@ -92,10 +92,10 @@ void ATFPublisher::PublishTF()
 	TSharedPtr<tf2_msgs::TFMessage> TFMsgPtr = TFWorldTree.GetAsTFMessage(TimeNow, Seq);
 	UE_LOG(LogTF, Warning, TEXT(" %s \n "), *TFMsgPtr->ToString());
 	
-	//// PUB
-	//ROSBridgeHandler->PublishMsg("/tf", TFMsgPtr);
+	// PUB
+	ROSBridgeHandler->PublishMsg("/tf", TFMsgPtr);
 
-	//ROSBridgeHandler->Process();
+	ROSBridgeHandler->Process();
 
 	// Update message sequence
 	Seq++;
