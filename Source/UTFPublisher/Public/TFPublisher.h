@@ -7,7 +7,8 @@
 #include "GameFramework/Actor.h"
 #include "ROSBridgeHandler.h"
 #include "ROSBridgePublisher.h"
-#include "TFWorldTree.h"
+#include "TFNode.h"
+#include "TFTree.h"
 #include "TFPublisher.generated.h"
 
 UCLASS()
@@ -39,7 +40,13 @@ public:
 	int32 ServerPORT;
 
 	// TF root frame name (map, world etc.)
+	UPROPERTY(EditAnywhere, Category = TF)
 	FString TFRootFrameName;
+
+	// Use tf root node as blank (avoid calculating relative transforms with root children)
+	// Disable if you want to use the TF tree origin the transform of the TFPublisher actor
+	UPROPERTY(EditAnywhere, Category = TF)
+	bool bUseBlankRootNode;
 
 	// Choose between variable (various publish rates for the frames) 
 	// or constant publish rates (all frames updated at the same time)
@@ -54,6 +61,9 @@ private:
 	// Publish tf tree
 	void PublishTF();
 
+	// Build tree
+	void BuildTFTree();
+
 	// ROSBridge handler for ROS connection
 	TSharedPtr<FROSBridgeHandler> ROSBridgeHandler;
 
@@ -63,9 +73,12 @@ private:
 	// Publisher timer handle (in case of custom publish rate)
 	FTimerHandle TFPubTimer;
 
-	// TF World Tree (representing all tf trees connected to World)
-	FTFWorldTree TFWorldTree;
+	// TF root node
+	UTFNode* TFRootNode;
 
-	// TF header sequence
+	// TF world tree
+	FTFTree TFTree;
+
+	// TF header message sequence
 	uint32 Seq;
 };

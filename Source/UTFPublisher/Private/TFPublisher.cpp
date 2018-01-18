@@ -17,6 +17,9 @@ ATFPublisher::ATFPublisher()
 	// Update on tick by default
 	bUseConstantPublishRate = false;
 
+	// Use root node as blank (no relative transformations calculated with identity transform)
+	bUseBlankRootNode = true;
+
 	// Default timer delta time (s) (0 = on Tick)
 	ConstantPublishRate = 0.0f;
 
@@ -30,8 +33,11 @@ void ATFPublisher::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// Create tf world tree with the given root name
-	TFWorldTree.Build(GetWorld(), TFRootFrameName);
+	// Build TF tree
+	BuildTFTree();
+
+	//// Create tf world tree with the given root name
+	//TFWorldTree.Build(GetWorld(), TFRootFrameName);
 
 	// Create the ROSBridge handler for connecting with ROS
 	ROSBridgeHandler = MakeShareable<FROSBridgeHandler>(
@@ -82,6 +88,35 @@ void ATFPublisher::Tick(float DeltaTime)
 	PublishTF();
 }
 
+// Build TF tree
+void ATFPublisher::BuildTFTree()
+{
+	// Create root node
+	TFRootNode = NewObject<UTFNode>(this);
+	TFRootNode->RegisterComponent();
+
+	if (bUseBlankRootNode)
+	{
+		// Init node as blank (no relative transform calculation with root children)
+		TFRootNode->Init(TFRootFrameName, &TFTree);
+	}
+	else
+	{
+		// TF root node uses this actor as origin position
+		// relative calculation now need to happen between root and its children
+		TFRootNode->Init(TFRootFrameName, &TFTree, this);
+	}
+
+	// Initialize tree with the root node
+	TFTree.Init(TFRootNode);
+
+	// Bind root node transform function pointer (call after adding to tree)
+	TFRootNode->BindTransformFunction();
+
+	// Build tree
+	TFTree.Build(GetWorld());
+}
+
 // Publish tf tree
 void ATFPublisher::PublishTF()
 {
@@ -89,7 +124,7 @@ void ATFPublisher::PublishTF()
 	FROSTime TimeNow = FROSTime::Now();
 		
 	// Create TFMessage
-	TSharedPtr<tf2_msgs::TFMessage> TFMsgPtr = TFWorldTree.GetAsTFMessage(TimeNow, Seq);
+	TSharedPtr<tf2_msgs::TFMessage> TFMsgPtr = TFTree.GetTFMessageMsg(TimeNow, Seq);
 	UE_LOG(LogTF, Warning, TEXT(" %s \n "), *TFMsgPtr->ToString());
 	
 	// PUB
