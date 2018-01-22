@@ -6,21 +6,25 @@
 #include "UTFPublisher.h" // CoreMinimal, TFLog
 #include "TFNode.h"
 #include "TagStatics.h"
-#include "CoordConvStatics.h"
 #include "tf2_msgs/TFMessage.h"
 #include "TFTree.generated.h"
 
 /**
 * FTFTree - TF Tree
 */
-USTRUCT(BlueprintType)
+USTRUCT()
 struct UTFPUBLISHER_API FTFTree
 {
 	GENERATED_BODY()
 
 	// Array of all nodes in the tree (used for convenient iteration)
-	UPROPERTY()
 	TArray<UTFNode*> TFNodes;
+
+	// Destructor
+	~FTFTree()
+	{
+		Empty();
+	}
 
 	// Init with a blank root (root will be ignored in the array)
 	void Init(UTFNode* InRootNode)
@@ -144,31 +148,30 @@ private:
 		{
 			// Set default values to child frame
 			FString ChildFrameId = MapItr->Key->GetName();
-
 			// Set child frame id from tag
 			if (MapItr->Value.Contains(TEXT("ChildFrameId")))
 			{
 				ChildFrameId = MapItr->Value["ChildFrameId"];
 			}
-						
+			
+			// Check for parent frame id
 			if (MapItr->Value.Contains(TEXT("ParentFrameId")))
 			{
 				// If parent frame id equals the root node frame
-				const FString ParentFrameId = MapItr->Value["ParentFrameId"];
 				if (MapItr->Value["ParentFrameId"].Equals(Root->GetFrameId()))
 				{
-					UE_LOG(LogTF, Warning, TEXT("[%s][%i] Add ROOT child node %s"),
-						*FString(__FUNCTION__), __LINE__, *ChildFrameId);
 					// Add as root child node
 					AddRootChildNode(ChildFrameId, MapItr->Key);
+					// Remove element from map
+					MapItr.RemoveCurrent();
 				}
 			}
 			else
 			{
-				UE_LOG(LogTF, Warning, TEXT("[%s][%i] Add ROOT child node %s"),
-					*FString(__FUNCTION__), __LINE__, *ChildFrameId);
 				// Missing parent frame id default as root child node
 				AddRootChildNode(ChildFrameId, MapItr->Key);
+				// Remove element from map
+				MapItr.RemoveCurrent();
 			}
 		}
 	}
@@ -187,7 +190,6 @@ private:
 			{
 				// Add default value to the child frame id
 				FString ChildFrameId = MapItr->Key->GetName();
-
 				// If available, set child frame id from tag
 				if (MapItr->Value.Contains(TEXT("ChildFrameId")))
 				{
@@ -200,8 +202,8 @@ private:
 					// If parent is already in tree, add node
 					if (AddNode(ChildFrameId, MapItr->Key, MapItr->Value["ParentFrameId"]))
 					{
-						UE_LOG(LogTF, Warning, TEXT("[%s][%i] Add child node %s"),
-							*FString(__FUNCTION__), __LINE__, *ChildFrameId);
+						// Remove element from map
+						MapItr.RemoveCurrent();
 					}
 				}
 			}
@@ -222,18 +224,14 @@ private:
 		{
 			// Set default values to child frame
 			FString ChildFrameId = MapItr->Key->GetName();
-
 			// If available, set child frame id from tag
 			if (MapItr->Value.Contains(TEXT("ChildFrameId")))
 			{
 				ChildFrameId = MapItr->Value["ChildFrameId"];
 			}
-			UE_LOG(LogTF, Error, TEXT("[%s] Add ORPHAN ROOT child node: %s"),
-				*FString(__FUNCTION__), *ChildFrameId);
 
 			// Add orphan as a root child node
 			AddRootChildNode(ChildFrameId, MapItr->Key);
-
 			// Remove element from map
 			MapItr.RemoveCurrent();
 		}

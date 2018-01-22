@@ -19,7 +19,6 @@ UTFNode::UTFNode()
 // Destructor
 UTFNode::~UTFNode()
 {
-	UE_LOG(LogTF, Error, TEXT("[%s]"), *FString(__FUNCTION__));
 }
 
 // Called when the game starts
@@ -35,7 +34,6 @@ void UTFNode::BeginPlay()
 void UTFNode::BeginDestroy()
 {
 	Super::BeginDestroy();
-	UE_LOG(LogTF, Error, TEXT("[%s]"), *FString(__FUNCTION__));
 	
 	// Remove itself from the TF world tree
 	if (OwnerTree != nullptr)
@@ -94,7 +92,7 @@ void UTFNode::BindTransformFunction()
 	}
 	else 
 	{
-		// Node is root, not blank, return world transform (avoid calculating unnecessary relative TFtransform)
+		// Node is root, not blank, return roots world transform (avoid calculating unnecessary relative TFtransform)
 		if (!IsBlank())
 		{
 			if (ActorBaseObject)
@@ -107,12 +105,6 @@ void UTFNode::BindTransformFunction()
 			}
 		}
 	}
-}
-
-// Get node transform
-FTransform UTFNode::GetTransform() const
-{
-	return (this->*GetTransformFunctionPtr)();
 }
 
 // Get as geometry_msgs::TransformStamped message
@@ -168,24 +160,30 @@ void UTFNode::Clear()
 	// If the node is root, the whole tree will get deleted;
 }
 
+// Get node transform
+FORCEINLINE FTransform UTFNode::GetTransform() const
+{
+	return (this->*GetTransformFunctionPtr)();
+}
+
 // Get the transform (default identity)
 FORCEINLINE FTransform UTFNode::GetTransform_AsIdentity() const
 {
-	return FTransform();
+	return FTransform::Identity;
 }
 
 // Get the world transform of actor (node has non blank parent)
 FORCEINLINE FTransform UTFNode::GetRelativeTransform_FromActor() const
 {
-	return Parent->GetTransform().GetRelativeTransform(
-			ActorBaseObject->GetTransform());
+	return ActorBaseObject->GetTransform().GetRelativeTransform(
+		Parent->ActorBaseObject->GetTransform());
 }
 
 // Get the world transform of scene component
 FORCEINLINE FTransform UTFNode::GetRelativeTransform_FromSceneComponent() const
 {
-	return Parent->GetTransform().GetRelativeTransform(
-		SceneComponentBaseObject->GetComponentTransform());
+	return SceneComponentBaseObject->GetComponentTransform().GetRelativeTransform(
+		Parent->SceneComponentBaseObject->GetComponentTransform());
 }
 
 // Get the world transform of actor
@@ -198,43 +196,4 @@ FORCEINLINE FTransform UTFNode::GetWorldTransform_FromActor() const
 FORCEINLINE FTransform UTFNode::GetWorldTransform_FromSceneComponent() const
 {
 	return SceneComponentBaseObject->GetComponentTransform();
-}
-
-// Output the node data as string
-FString UTFNode::ToString() const
-{
-	FString BaseObjName;
-	if (ActorBaseObject)
-	{
-		BaseObjName = ActorBaseObject->GetName();
-	}
-	else if (SceneComponentBaseObject)
-	{
-		BaseObjName = SceneComponentBaseObject->GetName();
-	}
-
-	if (Parent != nullptr)
-	{
-		FString ParentBaseObjName;
-		if (Parent->ActorBaseObject)
-		{
-			ParentBaseObjName = Parent->ActorBaseObject->GetName();
-		}
-		else if (Parent->SceneComponentBaseObject)
-		{
-			ParentBaseObjName = Parent->SceneComponentBaseObject->GetName();
-		}
-		//return FString::Printf(TEXT("\t[%s(%s)] -> [%s(%s)]; T=%s \n"),
-		//	*Parent->ChildFrameId, *ParentBaseObjName, *ChildFrameId, *BaseObjName,
-		//	*GetRelativeTransform().ToString());
-		return FString::Printf(TEXT("\t[%s(%s)] -> [%s(%s)]; \n"),
-			*Parent->FrameId, *ParentBaseObjName, *FrameId, *BaseObjName);
-	}
-	else
-	{
-		//return FString::Printf(TEXT("\t[None(none)] -> [%s(%s)]; T=%s \n"),
-		//	*ChildFrameId, *BaseObjName, *GetRelativeTransform().ToString());
-		return FString::Printf(TEXT("\t[None(none)] -> [%s(%s)];\n"),
-			*FrameId, *BaseObjName);
-	}
 }

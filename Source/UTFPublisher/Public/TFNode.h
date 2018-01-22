@@ -18,9 +18,9 @@ struct FTFTree;
 *  - array of children nodes
 *  - node data:
 *    - frame name
-*    - pointer to parent entity (AActor or USceneComponent) with access to FTransform
+*    - pointer to parent entity (AActor or USceneComponent) with access to FTransform, nullptr if blank node
 */
-UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
+UCLASS()
 class UTFPUBLISHER_API UTFNode : public UActorComponent
 {
 	GENERATED_BODY()
@@ -52,9 +52,6 @@ public:
 	// Get children
 	const TArray<UTFNode*>& GetChildren() const { return Children; }
 
-	// Get tf transform
-	FTransform GetTransform() const;
-
 	// Check if node is blank
 	bool IsBlank() const { return ActorBaseObject == nullptr && SceneComponentBaseObject == nullptr; }
 
@@ -70,10 +67,10 @@ public:
 	// Clear node from tree, remove linking to parent, and link children to parent
 	void Clear();
 
-	// String output of the tf node data
-	FString ToString() const;
-
 private:
+	// Get tf transform
+	FORCEINLINE FTransform GetTransform() const;
+
 	// Get the transform (default identity)
 	FORCEINLINE FTransform GetTransform_AsIdentity() const;
 
