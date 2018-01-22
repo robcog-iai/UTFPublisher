@@ -36,9 +36,6 @@ void ATFPublisher::BeginPlay()
 	// Build TF tree
 	BuildTFTree();
 
-	//// Create tf world tree with the given root name
-	//TFWorldTree.Build(GetWorld(), TFRootFrameName);
-
 	// Create the ROSBridge handler for connecting with ROS
 	ROSBridgeHandler = MakeShareable<FROSBridgeHandler>(
 		new FROSBridgeHandler(ServerIP, ServerPORT));
@@ -125,7 +122,7 @@ void ATFPublisher::PublishTF()
 		
 	// Create TFMessage
 	TSharedPtr<tf2_msgs::TFMessage> TFMsgPtr = TFTree.GetTFMessageMsg(TimeNow, Seq);
-	UE_LOG(LogTF, Warning, TEXT(" %s \n "), *TFMsgPtr->ToString());
+	//UE_LOG(LogTF, Warning, TEXT(" %s \n "), *TFMsgPtr->ToString());
 	
 	// PUB
 	ROSBridgeHandler->PublishMsg("/tf", TFMsgPtr);
