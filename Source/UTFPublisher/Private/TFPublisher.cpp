@@ -42,13 +42,15 @@ void ATFPublisher::BeginPlay()
 	
 	// Create the tf publisher
 	TFPublisher = MakeShareable<FROSBridgePublisher>(
-		new FROSBridgePublisher("tf2_msgs/TFMessage", "/tf_static"));
-
-	// Add publisher
-	ROSBridgeHandler->AddPublisher(TFPublisher);
+		new FROSBridgePublisher("tf", "tf2_msgs/TFMessage"));
+	//TFPublisher = MakeShareable<FROSBridgePublisher>(
+	//	new FROSBridgePublisher("tf_static", "tf2_msgs/TFMessage"));
 
 	// Connect to ROS
 	ROSBridgeHandler->Connect();
+
+	// Add publisher
+	ROSBridgeHandler->AddPublisher(TFPublisher);
 
 	// Bind publish function to timer
 	if (bUseConstantPublishRate)
