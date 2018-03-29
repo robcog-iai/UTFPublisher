@@ -42,7 +42,7 @@ public class UTFPublisher : ModuleRules
 				"Slate",
 				"SlateCore",
                 "UTags",
-                "UCoordConv",
+                "UConversions",
                 "UROSBridge",
 				"Json",
 				"JsonUtilities"

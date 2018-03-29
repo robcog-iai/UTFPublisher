@@ -30,7 +30,7 @@
 			"Enabled": true
 		},
 		{
-			"Name": "UCoordConv",
+			"Name": "UConversions",
 			"Enabled": true
 		}
 	]
