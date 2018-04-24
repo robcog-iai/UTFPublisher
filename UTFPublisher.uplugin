@@ -22,15 +22,11 @@
 	],
 	"Plugins": [
 		{
-			"Name": "UTags",
+			"Name": "UUtils",
 			"Enabled": true
 		},
 		{
 			"Name": "UROSBridge",
-			"Enabled": true
-		},
-		{
-			"Name": "UConversions",
 			"Enabled": true
 		}
 	]

@@ -3,7 +3,7 @@
 
 #include "TFNode.h"
 #include "TFTree.h"
-#include "ConversionsStatics.h"
+#include "Conversions.h"
 #include "geometry_msgs/TransformStamped.h"
 
 // Sets default values for this component's properties
@@ -120,7 +120,7 @@ geometry_msgs::TransformStamped UTFNode::GetTransformStampedMsg(const FROSTime& 
 	Header.SetStamp(InTime);
 
 	// Transform to ROS coordinate system
-	FTransform ROSTransf = FConversionsStatics::UToROS(GetTransform());
+	FTransform ROSTransf = FConversions::UToROS(GetTransform());
 
 	geometry_msgs::Transform TransfMsg(
 		geometry_msgs::Vector3(ROSTransf.GetLocation()),

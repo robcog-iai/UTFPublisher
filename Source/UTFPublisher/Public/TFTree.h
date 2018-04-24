@@ -5,7 +5,7 @@
 
 #include "UTFPublisher.h" // CoreMinimal, TFLog
 #include "TFNode.h"
-#include "TagStatics.h"
+#include "Tags.h"
 #include "tf2_msgs/TFMessage.h"
 #include "TFTree.generated.h"
 
@@ -47,7 +47,7 @@ struct UTFPUBLISHER_API FTFTree
 		}
 
 		// Get all objects with TF tags
-		auto ObjToTagData = FTagStatics::GetObjectsToKeyValuePairs(InWorld, TEXT("TF"));
+		auto ObjToTagData = FTags::GetObjectsToKeyValuePairs(InWorld, TEXT("TF"));
 
 		// Add initial root child nodes (nodes with no parent frame id, or the parent frame id equals the one from the root node)
 		AddRootChildNodes(&ObjToTagData);
