@@ -1,6 +1,7 @@
 // Copyright 2017, Institute for Artificial Intelligence - University of Bremen
 // Author: Andrei Haidu (http://haidu.eu)
 
+using System.IO;
 using UnrealBuildTool;
 
 public class UTFPublisher : ModuleRules
@@ -9,21 +10,8 @@ public class UTFPublisher : ModuleRules
 	{
 		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
 		
-		PublicIncludePaths.AddRange(
-			new string[] {
-				"UTFPublisher/Public"
-				// ... add public include paths required here ...
-			}
-			);
-				
-		
-		PrivateIncludePaths.AddRange(
-			new string[] {
-				"UTFPublisher/Private",
-				// ... add other private include paths required here ...
-			}
-			);
-			
+        	PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "Public"));
+        	PrivateIncludePaths.Add(Path.Combine(ModuleDirectory, "Private"));
 		
 		PublicDependencyModuleNames.AddRange(
 			new string[]
