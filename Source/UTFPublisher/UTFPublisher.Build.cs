@@ -1,4 +1,4 @@
-// Copyright 2017, Institute for Artificial Intelligence - University of Bremen
+// Copyright 2018, Institute for Artificial Intelligence - University of Bremen
 // Author: Andrei Haidu (http://haidu.eu)
 
 using UnrealBuildTool;
@@ -11,7 +11,6 @@ public class UTFPublisher : ModuleRules
 		
 		PublicIncludePaths.AddRange(
 			new string[] {
-				"UTFPublisher/Public"
 				// ... add public include paths required here ...
 			}
 			);
@@ -19,7 +18,6 @@ public class UTFPublisher : ModuleRules
 		
 		PrivateIncludePaths.AddRange(
 			new string[] {
-				"UTFPublisher/Private",
 				// ... add other private include paths required here ...
 			}
 			);
@@ -41,9 +39,9 @@ public class UTFPublisher : ModuleRules
 				"Engine",
 				"Slate",
 				"SlateCore",
-                "UTags",
-                "UConversions",
-                "UROSBridge",
+                		"UTags",
+                		"UConversions",
+                		"UROSBridge",
 				"Json",
 				"JsonUtilities"
 				// ... add private dependencies that you statically link with here ...	
