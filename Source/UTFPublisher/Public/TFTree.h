@@ -47,7 +47,7 @@ struct UTFPUBLISHER_API FTFTree
 		}
 
 		// Get all objects with TF tags
-		auto ObjToTagData = FTags::GetObjectsToKeyValuePairs(InWorld, TEXT("TF"));
+		auto ObjToTagData = FTags::GetObjectKeyValuePairsMap(InWorld, TEXT("TF"));
 
 		// Add initial root child nodes (nodes with no parent frame id, or the parent frame id equals the one from the root node)
 		AddRootChildNodes(&ObjToTagData);
