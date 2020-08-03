@@ -15,8 +15,8 @@ UCLASS()
 class UTFPUBLISHER_API ATFPublisher : public AActor
 {
 	GENERATED_BODY()
-	
-public:	
+
+public:
 	// Sets default values for this actor's properties
 	ATFPublisher();
 
@@ -27,7 +27,9 @@ protected:
 	// Called when destroyed or game stopped
 	virtual void EndPlay(const EEndPlayReason::Type Reason) override;
 
-public:	
+	virtual void BindEventHandler();
+
+public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
@@ -48,7 +50,7 @@ public:
 	UPROPERTY(EditAnywhere, Category = TF)
 	bool bUseBlankRootNode;
 
-	// Choose between variable (various publish rates for the frames) 
+	// Choose between variable (various publish rates for the frames)
 	// or constant publish rates (all frames updated at the same time)
 	UPROPERTY(EditAnywhere, Category = TF)
 	bool bUseConstantPublishRate;
@@ -56,7 +58,7 @@ public:
 	// Delta time (s) between publishing (0 = on Tick)
 	UPROPERTY(EditAnywhere, Category = TF, meta = (editcondition = "bUseConstantPublishRate", ClampMin = "0.0"))
 	float ConstantPublishRate;
-	
+
 private:
 	// Publish tf tree
 	void PublishTF();
@@ -81,4 +83,15 @@ private:
 
 	// TF header message sequence
 	uint32 Seq;
+
+        // Event called when new objects are created
+        void OnSLObjectCreation(UObject* TransformedObject, UObject* NewSlice, float Time);
+
+	// Event called when an object is destroyed
+	void OnSLObjectDestruction(UObject* ObjectActedOn, float Time);
+
+#if SL_WITH_SLICING
+        TArray<class USlicingBladeComponent*> Blades;
+#endif // SL_WITH_Slicing
+
 };

@@ -43,7 +43,8 @@ public class UTFPublisher : ModuleRules
                 		"UConversions",
                 		"UROSBridge",
 				"Json",
-				"JsonUtilities"
+				"JsonUtilities",
+                                "USlicingLogic",		    // SL_WITH_SLICING	
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);
@@ -55,5 +56,6 @@ public class UTFPublisher : ModuleRules
 				// ... add any modules that your module loads dynamically here ...
 			}
 			);
+                        PublicDefinitions.Add("SL_WITH_SLICING=1");
 	}
 }

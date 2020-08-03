@@ -28,7 +28,7 @@ struct UTFPUBLISHER_API FTFTree
 
 	// Init with a blank root (root will be ignored in the array)
 	void Init(UTFNode* InRootNode)
-	{		
+	{
 		Root = InRootNode;
 		// If root is not blank, add to nodes array
 		if (!InRootNode->IsBlank())
@@ -57,7 +57,7 @@ struct UTFPUBLISHER_API FTFTree
 
 		// Add orphan nodes as new root trees
 		AddOrphanNodes(&ObjToTagData);
-		
+
 		return true;
 	}
 
@@ -86,6 +86,39 @@ struct UTFPUBLISHER_API FTFTree
 			return AddRootChildNode(InChildFrameId, InAttachedObject);
 		}
 		return false;
+	}
+
+	// Find node
+	UTFNode* FindNode(const FString& InFrameId)
+	{
+		if (Root == nullptr)
+		{
+			return nullptr; // Tree is empty
+		}
+
+		if (Root->GetFrameId().Equals(InFrameId))
+		{
+			return Root;
+		}
+		else
+		{
+			TArray<UTFNode*> Stack;
+			Stack.Push(Root);
+
+			while (Stack.Num() > 0)
+			{
+				UTFNode* CurrNode = Stack.Pop();
+				if (CurrNode->GetFrameId().Equals(InFrameId))
+				{
+					return CurrNode;
+				}
+				for (const auto& ChildItr : CurrNode->GetChildren())
+				{
+					Stack.Push(ChildItr);
+				}
+			}
+			return nullptr; // Node not found
+		}
 	}
 
 	// Add root child node (add child node directly to the root)
@@ -153,7 +186,7 @@ private:
 			{
 				ChildFrameId = MapItr->Value["ChildFrameId"];
 			}
-			
+
 			// Check for parent frame id
 			if (MapItr->Value.Contains(TEXT("ParentFrameId")))
 			{
@@ -237,38 +270,6 @@ private:
 		}
 	}
 
-	// Find node
-	UTFNode* FindNode(const FString& InFrameId)
-	{
-		if (Root == nullptr)
-		{
-			return nullptr; // Tree is empty
-		}
-
-		if (Root->GetFrameId().Equals(InFrameId))
-		{
-			return Root;
-		}
-		else
-		{
-			TArray<UTFNode*> Stack;
-			Stack.Push(Root);
-
-			while (Stack.Num() > 0)
-			{
-				UTFNode* CurrNode = Stack.Pop();
-				if (CurrNode->GetFrameId().Equals(InFrameId))
-				{
-					return CurrNode;
-				}
-				for (const auto& ChildItr : CurrNode->GetChildren())
-				{
-					Stack.Push(ChildItr);
-				}
-			}
-			return nullptr; // Node not found
-		}
-	}
 
 	// Empty tree
 	void Empty()
@@ -282,5 +283,5 @@ private:
 	}
 
 	// Root node
-	UTFNode* Root;	
+	UTFNode* Root;
 };

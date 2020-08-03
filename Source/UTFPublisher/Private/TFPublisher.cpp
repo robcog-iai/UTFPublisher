@@ -4,6 +4,9 @@
 #include "TFPublisher.h"
 #include "tf2_msgs/TFMessage.h"
 
+#if SL_WITH_SLICING
+#include "SlicingBladeComponent.h"
+#endif // SL_WITH_SLICING
 
 // Sets default values
 ATFPublisher::ATFPublisher()
@@ -33,13 +36,15 @@ void ATFPublisher::BeginPlay()
 {
 	Super::BeginPlay();
 
+        BindEventHandler();
+
 	// Build TF tree
 	BuildTFTree();
 
 	// Create the ROSBridge handler for connecting with ROS
 	ROSBridgeHandler = MakeShareable<FROSBridgeHandler>(
 		new FROSBridgeHandler(ServerIP, ServerPORT));
-	
+
 	// Create the tf publisher
 	TFPublisher = MakeShareable<FROSBridgePublisher>(
 		new FROSBridgePublisher("tf", "tf2_msgs/TFMessage"));
@@ -121,11 +126,11 @@ void ATFPublisher::PublishTF()
 {
 	// Current time as ROS time
 	FROSTime TimeNow = FROSTime::Now();
-		
+
 	// Create TFMessage
 	TSharedPtr<tf2_msgs::TFMessage> TFMsgPtr = TFTree.GetTFMessageMsg(TimeNow, Seq);
 	//UE_LOG(LogTF, Warning, TEXT(" %s \n "), *TFMsgPtr->ToString());
-	
+
 	// PUB
 	ROSBridgeHandler->PublishMsg("/tf", TFMsgPtr);
 
@@ -135,3 +140,43 @@ void ATFPublisher::PublishTF()
 	Seq++;
 }
 
+
+void ATFPublisher::BindEventHandler()
+{
+#if SL_WITH_SLICING
+  for (TObjectIterator<USlicingBladeComponent> Itr; Itr; ++Itr)
+    {
+      // Make sure the object is in the world
+      if (GetWorld()->ContainsActor((*Itr)->GetOwner()))
+        {
+          Blades.Add(*Itr);
+        }
+    }
+  for(auto Blade : Blades)
+    {
+      UE_LOG(LogTF, Warning, TEXT("Bind blade %s"), *Blade->GetName());
+      Blade->OnObjectCreation.AddUObject(this, &ATFPublisher::OnSLObjectCreation);
+      Blade->OnObjectDestruction.AddUObject(this, &ATFPublisher::OnSLObjectDestruction);
+    }
+#endif // SL_WITH_SLICING
+}
+
+void ATFPublisher::OnSLObjectCreation(UObject* TransformedObject, UObject* NewSlice, float Time)
+{
+  UE_LOG(LogTF, Warning, TEXT("Object created %s"), *NewSlice->GetName());
+  UE_LOG(LogTF, Warning, TEXT("TransformedObject created %s"), *TransformedObject->GetName());
+  TFTree.AddRootChildNode(NewSlice->GetName(), NewSlice);
+  TFTree.AddRootChildNode(TransformedObject->GetName(), TransformedObject);
+}
+
+void ATFPublisher::OnSLObjectDestruction(UObject* ObjectActedOn, float Time)
+{
+  UE_LOG(LogTF, Warning, TEXT("BeginObject destroy %s"), *ObjectActedOn->GetName());
+  UTFNode* Node = TFTree.FindNode(ObjectActedOn->GetName());
+  if(Node)
+    {
+      UE_LOG(LogTF, Warning, TEXT("Object destroyed %s"), *ObjectActedOn->GetName());
+      TFTree.RemoveNode(Node);
+    }
+
+}
