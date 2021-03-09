@@ -4,10 +4,6 @@
 #include "TFPublisher.h"
 #include "tf2_msgs/TFMessage.h"
 
-#if SL_WITH_SLICING
-#include "SlicingBladeComponent.h"
-#endif // SL_WITH_SLICING
-
 // Sets default values
 ATFPublisher::ATFPublisher()
 {
@@ -15,7 +11,7 @@ ATFPublisher::ATFPublisher()
 	PrimaryActorTick.bCanEverTick = true;
 
 	// set default TF root frame
-	TFRootFrameName = TEXT("world");
+	TFRootFrameName = TEXT("map");
 
 	// Update on tick by default
 	bUseConstantPublishRate = false;
@@ -36,7 +32,7 @@ void ATFPublisher::BeginPlay()
 {
 	Super::BeginPlay();
 
-        BindEventHandler();
+        // BindEventHandler();
 
 	// Build TF tree
 	BuildTFTree();
@@ -141,42 +137,48 @@ void ATFPublisher::PublishTF()
 }
 
 
-void ATFPublisher::BindEventHandler()
+// void ATFPublisher::BindEventHandler()
+// {
+// #if SL_WITH_SLICING
+//   for (TObjectIterator<USlicingBladeComponent> Itr; Itr; ++Itr)
+//     {
+//       // Make sure the object is in the world
+//       if (GetWorld()->ContainsActor((*Itr)->GetOwner()))
+//         {
+//           Blades.Add(*Itr);
+//         }
+//     }
+//   for(auto Blade : Blades)
+//     {
+//       UE_LOG(LogTF, Warning, TEXT("Bind blade %s"), *Blade->GetName());
+//       Blade->OnObjectCreation.AddUObject(this, &ATFPublisher::OnSLObjectCreation);
+//       Blade->OnObjectDestruction.AddUObject(this, &ATFPublisher::OnSLObjectDestruction);
+//     }
+// #endif // SL_WITH_SLICING
+// }
+
+void ATFPublisher::AddObject(UObject* InObject)
 {
-#if SL_WITH_SLICING
-  for (TObjectIterator<USlicingBladeComponent> Itr; Itr; ++Itr)
-    {
-      // Make sure the object is in the world
-      if (GetWorld()->ContainsActor((*Itr)->GetOwner()))
-        {
-          Blades.Add(*Itr);
-        }
-    }
-  for(auto Blade : Blades)
-    {
-      UE_LOG(LogTF, Warning, TEXT("Bind blade %s"), *Blade->GetName());
-      Blade->OnObjectCreation.AddUObject(this, &ATFPublisher::OnSLObjectCreation);
-      Blade->OnObjectDestruction.AddUObject(this, &ATFPublisher::OnSLObjectDestruction);
-    }
-#endif // SL_WITH_SLICING
+  UE_LOG(LogTF, Warning, TEXT("Object created %s"), *InObject->GetName());
+  TFTree.AddRootChildNode(InObject->GetName(), InObject);
 }
 
-void ATFPublisher::OnSLObjectCreation(UObject* TransformedObject, UObject* NewSlice, float Time)
-{
-  UE_LOG(LogTF, Warning, TEXT("Object created %s"), *NewSlice->GetName());
-  UE_LOG(LogTF, Warning, TEXT("TransformedObject created %s"), *TransformedObject->GetName());
-  TFTree.AddRootChildNode(NewSlice->GetName(), NewSlice);
-  TFTree.AddRootChildNode(TransformedObject->GetName(), TransformedObject);
-}
+// void ATFPublisher::OnSLObjectCreation(UObject* TransformedObject, UObject* NewSlice, float Time)
+// {
+//   UE_LOG(LogTF, Warning, TEXT("Object created %s"), *NewSlice->GetName());
+//   UE_LOG(LogTF, Warning, TEXT("TransformedObject created %s"), *TransformedObject->GetName());
+//   TFTree.AddRootChildNode(NewSlice->GetName(), NewSlice);
+//   TFTree.AddRootChildNode(TransformedObject->GetName(), TransformedObject);
+// }
 
-void ATFPublisher::OnSLObjectDestruction(UObject* ObjectActedOn, float Time)
-{
-  UE_LOG(LogTF, Warning, TEXT("BeginObject destroy %s"), *ObjectActedOn->GetName());
-  UTFNode* Node = TFTree.FindNode(ObjectActedOn->GetName());
-  if(Node)
-    {
-      UE_LOG(LogTF, Warning, TEXT("Object destroyed %s"), *ObjectActedOn->GetName());
-      TFTree.RemoveNode(Node);
-    }
+// void ATFPublisher::OnSLObjectDestruction(UObject* ObjectActedOn, float Time)
+// {
+//   UE_LOG(LogTF, Warning, TEXT("BeginObject destroy %s"), *ObjectActedOn->GetName());
+//   UTFNode* Node = TFTree.FindNode(ObjectActedOn->GetName());
+//   if(Node)
+//     {
+//       UE_LOG(LogTF, Warning, TEXT("Object destroyed %s"), *ObjectActedOn->GetName());
+//       TFTree.RemoveNode(Node);
+//     }
 
-}
+// }

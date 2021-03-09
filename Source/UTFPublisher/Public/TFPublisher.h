@@ -11,6 +11,7 @@
 #include "TFTree.h"
 #include "TFPublisher.generated.h"
 
+
 UCLASS()
 class UTFPUBLISHER_API ATFPublisher : public AActor
 {
@@ -27,11 +28,13 @@ protected:
 	// Called when destroyed or game stopped
 	virtual void EndPlay(const EEndPlayReason::Type Reason) override;
 
-	virtual void BindEventHandler();
+	// virtual void BindEventHandler();
 
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+
+	void AddObject(UObject* InObject);
 
 	// ROSBridge server IP
 	UPROPERTY(EditAnywhere, Category = TF)
@@ -84,14 +87,15 @@ private:
 	// TF header message sequence
 	uint32 Seq;
 
-        // Event called when new objects are created
-        void OnSLObjectCreation(UObject* TransformedObject, UObject* NewSlice, float Time);
+        // // Event called when new objects are created
+        // void OnSLObjectCreation(UObject* TransformedObject, UObject* NewSlice, float Time);
 
-	// Event called when an object is destroyed
-	void OnSLObjectDestruction(UObject* ObjectActedOn, float Time);
+	// // Event called when an object is destroyed
+	// void OnSLObjectDestruction(UObject* ObjectActedOn, float Time);
 
-#if SL_WITH_SLICING
-        TArray<class USlicingBladeComponent*> Blades;
-#endif // SL_WITH_Slicing
+
+// #if SL_WITH_SLICING
+//         TArray<class USlicingBladeComponent*> Blades;
+// #endif // SL_WITH_Slicing
 
 };

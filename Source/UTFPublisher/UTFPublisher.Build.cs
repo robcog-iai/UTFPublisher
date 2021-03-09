@@ -27,6 +27,7 @@ public class UTFPublisher : ModuleRules
 			new string[]
 			{
 				"Core",
+                                "UTags",  
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);
@@ -44,7 +45,6 @@ public class UTFPublisher : ModuleRules
                 		"UROSBridge",
 				"Json",
 				"JsonUtilities",
-                                "USlicingLogic",		    // SL_WITH_SLICING	
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);
@@ -56,6 +56,5 @@ public class UTFPublisher : ModuleRules
 				// ... add any modules that your module loads dynamically here ...
 			}
 			);
-                        PublicDefinitions.Add("SL_WITH_SLICING=1");
 	}
 }
