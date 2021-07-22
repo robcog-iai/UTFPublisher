@@ -86,16 +86,4 @@ private:
 
 	// TF header message sequence
 	uint32 Seq;
-
-        // // Event called when new objects are created
-        // void OnSLObjectCreation(UObject* TransformedObject, UObject* NewSlice, float Time);
-
-	// // Event called when an object is destroyed
-	// void OnSLObjectDestruction(UObject* ObjectActedOn, float Time);
-
-
-// #if SL_WITH_SLICING
-//         TArray<class USlicingBladeComponent*> Blades;
-// #endif // SL_WITH_Slicing
-
 };
