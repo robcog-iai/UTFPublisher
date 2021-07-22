@@ -4,7 +4,6 @@
 #include "TFPublisher.h"
 #include "tf2_msgs/TFMessage.h"
 
-
 // Sets default values
 ATFPublisher::ATFPublisher()
 {
@@ -12,7 +11,7 @@ ATFPublisher::ATFPublisher()
 	PrimaryActorTick.bCanEverTick = true;
 
 	// set default TF root frame
-	TFRootFrameName = TEXT("world");
+	TFRootFrameName = TEXT("map");
 
 	// Update on tick by default
 	bUseConstantPublishRate = false;
@@ -39,12 +38,10 @@ void ATFPublisher::BeginPlay()
 	// Create the ROSBridge handler for connecting with ROS
 	ROSBridgeHandler = MakeShareable<FROSBridgeHandler>(
 		new FROSBridgeHandler(ServerIP, ServerPORT));
-	
+
 	// Create the tf publisher
 	TFPublisher = MakeShareable<FROSBridgePublisher>(
 		new FROSBridgePublisher("tf", "tf2_msgs/TFMessage"));
-	//TFPublisher = MakeShareable<FROSBridgePublisher>(
-	//	new FROSBridgePublisher("tf_static", "tf2_msgs/TFMessage"));
 
 	// Connect to ROS
 	ROSBridgeHandler->Connect();
@@ -121,11 +118,10 @@ void ATFPublisher::PublishTF()
 {
 	// Current time as ROS time
 	FROSTime TimeNow = FROSTime::Now();
-		
+
 	// Create TFMessage
 	TSharedPtr<tf2_msgs::TFMessage> TFMsgPtr = TFTree.GetTFMessageMsg(TimeNow, Seq);
-	//UE_LOG(LogTF, Warning, TEXT(" %s \n "), *TFMsgPtr->ToString());
-	
+
 	// PUB
 	ROSBridgeHandler->PublishMsg("/tf", TFMsgPtr);
 
@@ -135,3 +131,8 @@ void ATFPublisher::PublishTF()
 	Seq++;
 }
 
+void ATFPublisher::AddObject(UObject* InObject)
+{
+  UE_LOG(LogTF, Warning, TEXT("Object created %s"), *InObject->GetName());
+  TFTree.AddRootChildNode(InObject->GetName(), InObject);
+}

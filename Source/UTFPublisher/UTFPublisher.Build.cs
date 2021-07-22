@@ -27,6 +27,7 @@ public class UTFPublisher : ModuleRules
 			new string[]
 			{
 				"Core",
+                                "UTags",  
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);
@@ -43,7 +44,7 @@ public class UTFPublisher : ModuleRules
                 		"UConversions",
                 		"UROSBridge",
 				"Json",
-				"JsonUtilities"
+				"JsonUtilities",
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);
